@@ -7,7 +7,6 @@ use crate::traits::*;
 use crate::a;
 
 #[forward_receiver]
-#[derive (Copy, Clone)]
 pub struct Parallel <A, T>
 {
 	a: A,
@@ -19,6 +18,20 @@ impl <A, T> Parallel <A, T>
 	pub fn new (scalar_algebra: A) -> Self
 	{
 		Self {a: scalar_algebra, _t: PhantomData::<T>::default ()}
+	}
+}
+
+impl <A, T> Copy for Parallel <A, T>
+where A: Copy
+{
+}
+
+impl <A, T> Clone for Parallel <A, T>
+where A: Clone
+{
+	fn clone (&self) -> Self
+	{
+		Self::new (self . a . clone ())
 	}
 }
 
@@ -424,7 +437,7 @@ macro_rules! impl_bin_method_trait
 	{
 		impl <A, T, const N: usize, X> $Op <[T; N], X> for Parallel <A, T>
 		where
-			A: Clone + for <'a> $Op <T, X>,
+			A: Clone + $Op <T, X>,
 			X: Clone
 		{
 			type Output = [A::Output; N];

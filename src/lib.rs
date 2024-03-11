@@ -3,8 +3,8 @@
 
 pub mod traits;
 mod macros;
-mod algebras;
 
+mod algebras;
 pub use algebras::*;
 
 pub use abstract_algebras::use_algebra;
@@ -20,7 +20,7 @@ macro_rules! a
 			(-)
 			(+, -, *, /, +=, -=, *=, /=)
 			(abs, recip, sqrt, pow, log, exp, ln, sin, cos, tan, sin_cos,
-				is_zero, is_one, is_e, is_pi, is_inf, is_nan, accumulate,
+				is_zero, is_one, is_e, is_pi, is_inf, is_nan, accumulate, sum,
 				convert)
 			(zero, one, e, pi, inf, nan, zero_accumulator)
 		)

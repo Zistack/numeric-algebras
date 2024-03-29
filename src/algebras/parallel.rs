@@ -1,7 +1,7 @@
 use std::mem::MaybeUninit;
 use std::marker::PhantomData;
 
-use forward_traits::{forward_receiver, forward_traits_via_member};
+use forward_traits::{forward_receiver, forward_traits};
 
 use crate::traits::*;
 use crate::a;
@@ -57,7 +57,7 @@ where A: Clone + Neg <&'a T>
 	}
 }
 
-forward_traits_via_member! (Parallel . a, Neg <T>, for <'a> Neg <&'a T>);
+forward_traits! (for Parallel . a impl Neg <T> + for <'a> Neg <&'a T>);
 
 macro_rules! impl_unary_method_trait
 {
@@ -85,7 +85,7 @@ macro_rules! impl_unary_method_trait
 			}
 		}
 
-		forward_traits_via_member! (Parallel . a, $Op <T>, for <'a> $Op <&'a T>);
+		forward_traits! (for Parallel . a impl $Op <T> + for <'a> $Op <&'a T>);
 	}
 }
 
@@ -152,7 +152,7 @@ where A: Clone + SinCos <&'a T>
 	}
 }
 
-forward_traits_via_member! (Parallel . a, SinCos <T>, for <'a> SinCos <&'a T>);
+forward_traits! (for Parallel . a impl SinCos <T> + for <'a> SinCos <&'a T>);
 
 macro_rules! impl_bin_op_trait
 {
@@ -343,13 +343,13 @@ macro_rules! impl_bin_op_trait
 
 		// Scalar forward
 
-		forward_traits_via_member!
+		forward_traits!
 		(
-			Parallel . a,
-			$Op <T, T>,
-			for <'a> $Op <T, &'a T>,
-			for <'a> $Op <&'a T, T>,
-			for <'a, 'b> $Op <&'a T, &'b T>
+			for Parallel . a
+			impl $Op <T, T>
+				+ for <'a> $Op <T, &'a T>
+				+ for <'a> $Op <&'a T, T>
+				+ for <'a, 'b> $Op <&'a T, &'b T>
 		);
 	}
 }
@@ -417,11 +417,10 @@ macro_rules! impl_op_assign_trait
 
 		// Scalar forward
 
-		forward_traits_via_member!
+		forward_traits!
 		(
-			Parallel . a,
-			$OpAssign <T, T>,
-			for <'a> $OpAssign <T, &'a T>
+			for Parallel . a
+			impl $OpAssign <T, T> + for <'a> $OpAssign <T, &'a T>
 		);
 	}
 }
@@ -463,11 +462,10 @@ macro_rules! impl_bin_method_trait
 
 		// Scalar forward
 
-		forward_traits_via_member!
+		forward_traits!
 		(
-			Parallel . a,
-			for <X> $Op <T, X>,
-			for <'a, X> $Op <&'a T, X>
+			for Parallel . a
+			impl for <X> $Op <T, X> + for <'a, X> $Op <&'a T, X>
 		);
 	}
 }
@@ -496,7 +494,7 @@ macro_rules! impl_value_trait
 			}
 		}
 
-		forward_traits_via_member! (Parallel . a, $Value <T>);
+		forward_traits! (for Parallel . a impl $Value <T>);
 	}
 }
 
@@ -552,11 +550,11 @@ where A: Clone + Acc <T, &'a X>
 	}
 }
 
-forward_traits_via_member!
+forward_traits!
 (
-	Parallel . a,
-	Convert <A::Accumulator, T> where A: Accumulatable <T>;,
-	Accumulatable <T>,
-	Acc <T, T>,
-	for <'a> Acc <T, &'a T>
+	for Parallel . a
+	impl Convert <A::Accumulator, T> where A: Accumulatable <T>;
+		+ Accumulatable <T>
+		+ Acc <T, T>
+		+ for <'a> Acc <T, &'a T>
 );

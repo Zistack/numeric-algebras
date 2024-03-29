@@ -9,4 +9,4 @@ edition = "2021"
 [dependencies]
 numeric-algebras-macros = {path = "macros"}
 abstract-algebras = {path = "../abstract-algebras"}
-forward-traits = {version = "2.0"}
+forward-traits = {version = "3.0"}

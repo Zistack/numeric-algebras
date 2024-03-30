@@ -1,3 +1,6 @@
+#[cfg (any (test, feature = "proptest"))]
+use proptest::strategy::Strategy;
+
 use crate::traits::*;
 use crate::macros::*;
 use crate::a;
@@ -63,6 +66,18 @@ macro_rules! impl_traits_for_ty
 		impl Convert <$T, $T> for FloatMath
 		{
 			fn convert (self, x: $T) -> $T { x }
+		}
+
+		#[cfg (any (test, feature = "proptest"))]
+		impl UnitRange <$T> for FloatMath
+		{
+			fn unit_range (self) -> impl Strategy <Value = $T>
+			{
+				let start: $T = 0.0;
+				let end: $T = 1.0;
+
+				start..end
+			}
 		}
 	}
 }

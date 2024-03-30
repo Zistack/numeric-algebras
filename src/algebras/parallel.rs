@@ -1,7 +1,11 @@
+#[cfg (any (test, feature = "proptest"))]
+use std::fmt::Debug;
 use std::mem::MaybeUninit;
 use std::marker::PhantomData;
 
 use forward_traits::{forward_receiver, forward_traits};
+#[cfg (any (test, feature = "proptest"))]
+use proptest::strategy::Strategy;
 
 use crate::traits::*;
 use crate::a;
@@ -558,3 +562,20 @@ forward_traits!
 		+ Acc <T, T>
 		+ for <'a> Acc <T, &'a T>
 );
+
+#[cfg (any (test, feature = "proptest"))]
+impl <A, T, const N: usize> UnitRange <[T; N]> for Parallel <A, T>
+where
+	A: Clone + UnitRange <T>,
+	T: Debug,
+	Self: Clone + Mul <T, [T; N], Output = [T; N]> + One <[T; N]>
+{
+	fn unit_range (self) -> impl Strategy <Value = [T; N]>
+	{
+		self
+			. a
+			. clone ()
+			. unit_range ()
+			. prop_map (move |x| a! (self, x * <[T; N]>::one ()))
+	}
+}

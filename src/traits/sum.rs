@@ -1,4 +1,4 @@
-use super::Acc;
+use super::{AddAssign, Acc, Zero};
 
 use crate::a;
 
@@ -28,16 +28,22 @@ where T: Sums <X, X>
 
 // So, this technically works, but is it actually a good idea?
 impl <X, Y, T> Sum <X, Y> for T
-where T: Clone + Acc <X, Y>
+where
+	T: Clone + Acc <X, Y>,
+	T::AccumulatorAlgebra: Clone
+		+ AddAssign <T::Accumulator, Y>
+		+ Zero <T::Accumulator>,
 {
 	fn sum <I> (self, iter: I) -> X
 	where I: Iterator <Item = Y>
 	{
-		let mut accumulator = a! (self, T::Accumulator::zero_accumulator ());
+		let accumulator = self . clone () . accumulator ();
 
-		for y in iter { a! (self, (&mut accumulator) . accumulate (y)); }
+		let mut acc = a! (accumulator, T::Accumulator::zero ());
 
-		self . convert (accumulator)
+		for y in iter { a! (accumulator, acc += y); }
+
+		self . convert (acc)
 	}
 }
 

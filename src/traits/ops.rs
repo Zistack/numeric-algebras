@@ -53,5 +53,5 @@ def_binary_op! (Sub, sub);
 def_symmetric_binary_op! (Multiplication, Mul, mul);
 def_binary_op! (Div, div);
 
-def_binary_op! (Pow, pow);
-def_binary_op! (Log, log);
+def_try_binary_op! (Pow, pow);
+def_try_binary_op! (Log, log);

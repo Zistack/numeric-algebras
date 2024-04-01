@@ -520,37 +520,16 @@ where A: Clone + Accumulatable <T>
 }
 
 impl <A, T, const N: usize> Accumulatable <[T; N]> for Parallel <A, T>
-where A: Clone + Accumulatable <T>
+where
+	A: Clone + Accumulatable <T>,
+	Parallel <A::AccumulatorAlgebra, T>: Zero <[A::Accumulator; N]>
 {
+	type AccumulatorAlgebra = Parallel <A::AccumulatorAlgebra, T>;
 	type Accumulator = [A::Accumulator; N];
 
-	fn zero_accumulator (self) -> Self::Accumulator
+	fn accumulator (self) -> Self::AccumulatorAlgebra
 	{
-		std::array::from_fn (|_| a! (self . a, A::Accumulator::zero_accumulator ()))
-	}
-}
-
-impl <A, T, X, const N: usize> Acc <[T; N], [X; N]> for Parallel <A, T>
-where A: Clone + Acc <T, X>
-{
-	fn accumulate (self, acc: &mut Self::Accumulator, x: [X; N])
-	{
-		for (acc_i, x_i) in acc . iter_mut () . zip (x . into_iter ())
-		{
-			a! (self . a, acc_i . accumulate (x_i));
-		}
-	}
-}
-
-impl <'a, A, T, X, const N: usize> Acc <[T; N], &'a [X; N]> for Parallel <A, T>
-where A: Clone + Acc <T, &'a X>
-{
-	fn accumulate (self, acc: &mut Self::Accumulator, x: &'a [X; N])
-	{
-		for (acc_i, x_i) in acc . iter_mut () . zip (x . iter ())
-		{
-			a! (self . a, acc_i . accumulate (x_i));
-		}
+		Parallel::new (self . a . accumulator ())
 	}
 }
 
@@ -559,8 +538,6 @@ forward_traits!
 	for Parallel . a
 	impl Convert <A::Accumulator, T> where A: Accumulatable <T>;
 		+ Accumulatable <T>
-		+ Acc <T, T>
-		+ for <'a> Acc <T, &'a T>
 );
 
 #[cfg (any (test, feature = "proptest"))]

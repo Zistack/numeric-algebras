@@ -47,19 +47,12 @@ macro_rules! impl_traits_for_ty
 
 		impl Accumulatable <$T> for FloatMath
 		{
+			type AccumulatorAlgebra = Self;
 			type Accumulator = $T;
 
-			fn zero_accumulator (self) -> Self::Accumulator
+			fn accumulator (self) -> Self::AccumulatorAlgebra
 			{
-				a! (self, Self::Accumulator::zero ())
-			}
-		}
-
-		impl Acc <$T, $T> for FloatMath
-		{
-			fn accumulate (self, acc: &mut Self::Accumulator, x: $T)
-			{
-				a! (self, *acc += x);
+				self
 			}
 		}
 

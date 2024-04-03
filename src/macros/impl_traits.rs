@@ -1,6 +1,6 @@
 macro_rules! impl_unary_ops
 {
-	($T: ty, $Op: ident, $op: ident, $opsym: tt, $Algebra: ident) =>
+	($T: ty, $Op: ident, $op: ident, $opsym: tt, $Algebra: ty) =>
 	{
 		impl $Op <$T> for $Algebra
 		{
@@ -27,7 +27,7 @@ pub (crate) use impl_unary_ops;
 
 macro_rules! impl_unary_methods
 {
-	($T: ty, $Op: ident, $op: ident, $Algebra: ident) =>
+	($T: ty, $Op: ident, $op: ident, $Algebra: ty) =>
 	{
 		impl $Op <$T> for $Algebra
 		{
@@ -54,7 +54,7 @@ pub (crate) use impl_unary_methods;
 
 macro_rules! impl_sin_cos
 {
-	($T: ty, $Algebra: ident) =>
+	($T: ty, $Algebra: ty) =>
 	{
 		impl SinCos <$T> for $Algebra
 		{
@@ -81,7 +81,7 @@ pub (crate) use impl_sin_cos;
 
 macro_rules! impl_bin_ops
 {
-	($T: ty, $Op: ident, $op: ident, $opsym: tt, $Algebra: ident) =>
+	($T: ty, $Op: ident, $op: ident, $opsym: tt, $Algebra: ty) =>
 	{
 		impl $Op <$T, $T> for $Algebra
 		{
@@ -128,7 +128,7 @@ pub (crate) use impl_bin_ops;
 
 macro_rules! impl_op_assigns
 {
-	($T: ty, $OpAssign: ident, $op_assign: ident, $opassignsym: tt, $Algebra: ident) =>
+	($T: ty, $OpAssign: ident, $op_assign: ident, $opassignsym: tt, $Algebra: ty) =>
 	{
 		impl $OpAssign <$T, $T> for $Algebra
 		{
@@ -149,56 +149,92 @@ macro_rules! impl_op_assigns
 }
 pub (crate) use impl_op_assigns;
 
-macro_rules! impl_hetero_bin_methods
+macro_rules! impl_convert
 {
-	($X: ty, $Y: ty, $Op: ident, $op: ident, $inner_op: ident, $Algebra: ident) =>
+	($X: ty, $Y: ty, $Algebra: ty) =>
 	{
-		impl $Op <$X, $Y> for $Algebra
+		impl Convert <$X, $Y> for $Algebra
 		{
-			type Output = $X;
-
-			fn $op (self, lhs: $X, rhs: $Y) -> Self::Output
+			fn convert (self, x: $X) -> $Y
 			{
-				lhs . $inner_op (rhs . into ())
-			}
-		}
-
-		impl <'a> $Op <$X, &'a $Y> for $Algebra
-		{
-			type Output = $X;
-
-			fn $op (self, lhs: $X, rhs: &'a $Y) -> Self::Output
-			{
-				lhs . $inner_op ((*rhs) . into ())
-			}
-		}
-
-		impl <'a> $Op <&'a $X, $Y> for $Algebra
-		{
-			type Output = $X;
-
-			fn $op (self, lhs: &'a $X, rhs: $Y) -> Self::Output
-			{
-				lhs . $inner_op (rhs . into ())
-			}
-		}
-
-		impl <'a, 'b> $Op <&'a $X, &'b $Y> for $Algebra
-		{
-			type Output = $X;
-
-			fn $op (self, lhs: &'a $X, rhs: &'b $Y) -> Self::Output
-			{
-				lhs . $inner_op ((*rhs) . into ())
+				<$Y>::from (x)
 			}
 		}
 	}
 }
-pub (crate) use impl_hetero_bin_methods;
+pub (crate) use impl_convert;
+
+macro_rules! impl_approx_convert
+{
+	($X: ty, $Y: ty, $Algebra: ty) =>
+	{
+		impl ApproxConvert <$X, $Y> for $Algebra
+		{
+			fn approx_convert (self, x: $X) -> $Y
+			{
+				(x as $Y)
+			}
+		}
+	}
+}
+pub (crate) use impl_approx_convert;
+
+macro_rules! impl_bin_methods
+{
+	(
+		$T: ty,
+		$Op: ident,
+		$op: ident,
+		$inner_op: ident,
+		$Algebra: ty
+	) =>
+	{
+		impl $Op <$T, $T> for $Algebra
+		{
+			type Output = $T;
+
+			fn $op (self, lhs: $T, rhs: $T) -> Self::Output
+			{
+				lhs . $inner_op (rhs)
+			}
+		}
+
+		impl <'a> $Op <$T, &'a $T> for $Algebra
+		{
+			type Output = $T;
+
+			fn $op (self, lhs: $T, rhs: &'a $T) -> Self::Output
+			{
+				lhs . $inner_op (*rhs)
+			}
+		}
+
+		impl <'a> $Op <&'a $T, $T> for $Algebra
+		{
+			type Output = $T;
+
+			fn $op (self, lhs: &'a $T, rhs: $T) -> Self::Output
+			{
+				lhs . $inner_op (rhs)
+			}
+		}
+
+		impl <'a, 'b> $Op <&'a $T, &'b $T> for $Algebra
+		{
+			type Output = $T;
+
+			fn $op (self, lhs: &'a $T, rhs: &'b $T) -> Self::Output
+			{
+				lhs . $inner_op (*rhs)
+			}
+		}
+	}
+}
+pub (crate) use impl_bin_methods;
 
 macro_rules! impl_value_partialeq
 {
-	($T: ty, $Value: ident, $value: ident, $is_value: ident, $v: expr, $Algebra: ident) =>
+	($T: ty, $Value: ident, $value: ident, $is_value: ident, $v: expr, $Algebra: ty) =>
 	{
 		impl $Value <$T> for $Algebra
 		{
@@ -218,7 +254,7 @@ pub (crate) use impl_value_partialeq;
 
 macro_rules! impl_value_predicate
 {
-	($T: ty, $Value: ident, $value: ident, $is_value: ident, $v: expr, $Algebra: ident) =>
+	($T: ty, $Value: ident, $value: ident, $is_value: ident, $v: expr, $Algebra: ty) =>
 	{
 		impl $Value <$T> for $Algebra
 		{

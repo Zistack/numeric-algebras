@@ -21,3 +21,9 @@ pub fn def_symmetric_binary_op (input: TokenStream) -> TokenStream
 {
 	def_binary_op_traits::def_symmetric_binary_op_impl (input)
 }
+
+#[proc_macro]
+pub fn def_try_binary_op (input: TokenStream) -> TokenStream
+{
+	def_binary_op_traits::def_try_binary_op_impl (input)
+}

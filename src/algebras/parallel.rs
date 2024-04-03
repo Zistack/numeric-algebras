@@ -11,13 +11,13 @@ use crate::traits::*;
 use crate::a;
 
 #[forward_receiver]
-pub struct Parallel <A, T>
+pub struct ParallelAlgebra <A, T>
 {
 	a: A,
 	_t: PhantomData <T>
 }
 
-impl <A, T> Parallel <A, T>
+impl <A, T> ParallelAlgebra <A, T>
 {
 	pub fn new (scalar_algebra: A) -> Self
 	{
@@ -25,12 +25,12 @@ impl <A, T> Parallel <A, T>
 	}
 }
 
-impl <A, T> Copy for Parallel <A, T>
+impl <A, T> Copy for ParallelAlgebra <A, T>
 where A: Copy
 {
 }
 
-impl <A, T> Clone for Parallel <A, T>
+impl <A, T> Clone for ParallelAlgebra <A, T>
 where A: Clone
 {
 	fn clone (&self) -> Self
@@ -39,7 +39,13 @@ where A: Clone
 	}
 }
 
-impl <A, T, const N: usize> Neg <[T; N]> for Parallel <A, T>
+forward_traits!
+(
+	for ParallelAlgebra . a
+	impl for <X> Convert <X, T> + for <X> ApproxConvert <X, T>
+);
+
+impl <A, T, const N: usize> Neg <[T; N]> for ParallelAlgebra <A, T>
 where A: Clone + Neg <T>
 {
 	type Output = [A::Output; N];
@@ -50,7 +56,7 @@ where A: Clone + Neg <T>
 	}
 }
 
-impl <'a, A, T, const N: usize> Neg <&'a [T; N]> for Parallel <A, T>
+impl <'a, A, T, const N: usize> Neg <&'a [T; N]> for ParallelAlgebra <A, T>
 where A: Clone + Neg <&'a T>
 {
 	type Output = [A::Output; N];
@@ -61,13 +67,13 @@ where A: Clone + Neg <&'a T>
 	}
 }
 
-forward_traits! (for Parallel . a impl Neg <T> + for <'a> Neg <&'a T>);
+forward_traits! (for ParallelAlgebra . a impl Neg <T> + for <'a> Neg <&'a T>);
 
 macro_rules! impl_unary_method_trait
 {
 	($Op: ident, $op: ident) =>
 	{
-		impl <A, T, const N: usize> $Op <[T; N]> for Parallel <A, T>
+		impl <A, T, const N: usize> $Op <[T; N]> for ParallelAlgebra <A, T>
 		where A: Clone + $Op <T>
 		{
 			type Output = [A::Output; N];
@@ -78,7 +84,8 @@ macro_rules! impl_unary_method_trait
 			}
 		}
 
-		impl <'a, A, T, const N: usize> $Op <&'a [T; N]> for Parallel <A, T>
+		impl <'a, A, T, const N: usize> $Op <&'a [T; N]>
+		for ParallelAlgebra <A, T>
 		where A: Clone + $Op <&'a T>
 		{
 			type Output = [A::Output; N];
@@ -89,7 +96,11 @@ macro_rules! impl_unary_method_trait
 			}
 		}
 
-		forward_traits! (for Parallel . a impl $Op <T> + for <'a> $Op <&'a T>);
+		forward_traits!
+		(
+			for ParallelAlgebra . a
+			impl $Op <T> + for <'a> $Op <&'a T>
+		);
 	}
 }
 
@@ -102,7 +113,7 @@ impl_unary_method_trait! (Sin, sin);
 impl_unary_method_trait! (Cos, cos);
 impl_unary_method_trait! (Tan, tan);
 
-impl <A, T, const N: usize> SinCos <[T; N]> for Parallel <A, T>
+impl <A, T, const N: usize> SinCos <[T; N]> for ParallelAlgebra <A, T>
 where A: Clone + SinCos <T>
 {
 	type Output = [A::Output; N];
@@ -129,7 +140,7 @@ where A: Clone + SinCos <T>
 	}
 }
 
-impl <'a, A, T, const N: usize> SinCos <&'a [T; N]> for Parallel <A, T>
+impl <'a, A, T, const N: usize> SinCos <&'a [T; N]> for ParallelAlgebra <A, T>
 where A: Clone + SinCos <&'a T>
 {
 	type Output = [A::Output; N];
@@ -156,13 +167,18 @@ where A: Clone + SinCos <&'a T>
 	}
 }
 
-forward_traits! (for Parallel . a impl SinCos <T> + for <'a> SinCos <&'a T>);
+forward_traits!
+(
+	for ParallelAlgebra . a
+	impl SinCos <T> + for <'a> SinCos <&'a T>
+);
 
 macro_rules! impl_bin_op_trait
 {
 	($Op: ident, $op: ident, $opsym: tt) =>
 	{
-		impl <A, T, const N: usize> $Op <[T; N], [T; N]> for Parallel <A, T>
+		impl <A, T, const N: usize> $Op <[T; N], [T; N]>
+		for ParallelAlgebra <A, T>
 		where A: Clone + $Op <T, T>
 		{
 			type Output = [A::Output; N];
@@ -183,7 +199,8 @@ macro_rules! impl_bin_op_trait
 			}
 		}
 
-		impl <'a, A, T, const N: usize> $Op <[T; N], &'a [T; N]> for Parallel <A, T>
+		impl <'a, A, T, const N: usize> $Op <[T; N], &'a [T; N]>
+		for ParallelAlgebra <A, T>
 		where A: Clone + $Op <T, &'a T>
 		{
 			type Output = [A::Output; N];
@@ -204,7 +221,8 @@ macro_rules! impl_bin_op_trait
 			}
 		}
 
-		impl <'a, A, T, const N: usize> $Op <&'a [T; N], [T; N]> for Parallel <A, T>
+		impl <'a, A, T, const N: usize> $Op <&'a [T; N], [T; N]>
+		for ParallelAlgebra <A, T>
 		where A: Clone + $Op <&'a T, T>
 		{
 			type Output = [A::Output; N];
@@ -226,7 +244,7 @@ macro_rules! impl_bin_op_trait
 		}
 
 		impl <'a, 'b, A, T, const N: usize> $Op <&'a [T; N], &'b [T; N]>
-		for Parallel <A, T>
+		for ParallelAlgebra <A, T>
 		where A: Clone + $Op <&'a T, &'b T>
 		{
 			type Output = [A::Output; N];
@@ -249,7 +267,8 @@ macro_rules! impl_bin_op_trait
 
 		// Scalar on RHS
 
-		impl <A, T, const N: usize, O> $Op <[T; N], T> for Parallel <A, T>
+		impl <A, T, const N: usize, O> $Op <[T; N], T>
+		for ParallelAlgebra <A, T>
 		where A: Clone + for <'a> $Op <T, &'a T, Output = O>
 		{
 			type Output = [O; N];
@@ -260,7 +279,8 @@ macro_rules! impl_bin_op_trait
 			}
 		}
 
-		impl <'a, A, T, const N: usize> $Op <[T; N], &'a T> for Parallel <A, T>
+		impl <'a, A, T, const N: usize> $Op <[T; N], &'a T>
+		for ParallelAlgebra <A, T>
 		where T: Clone, A: Clone + $Op <T, &'a T>
 		{
 			type Output = [A::Output; N];
@@ -271,7 +291,8 @@ macro_rules! impl_bin_op_trait
 			}
 		}
 
-		impl <'a, A, T, const N: usize, O> $Op <&'a [T; N], T> for Parallel <A, T>
+		impl <'a, A, T, const N: usize, O> $Op <&'a [T; N], T>
+		for ParallelAlgebra <A, T>
 		where A: Clone + for <'b> $Op <&'a T, &'b T, Output = O>
 		{
 			type Output = [O; N];
@@ -285,7 +306,7 @@ macro_rules! impl_bin_op_trait
 		}
 
 		impl <'a, 'b, A, T, const N: usize> $Op <&'a [T; N], &'b T>
-		for Parallel <A, T>
+		for ParallelAlgebra <A, T>
 		where T: Clone, A: Clone + $Op <&'a T, &'b T>
 		{
 			type Output = [A::Output; N];
@@ -298,7 +319,8 @@ macro_rules! impl_bin_op_trait
 
 		// Scalar on LHS
 
-		impl <A, T, const N: usize, O> $Op <T, [T; N]> for Parallel <A, T>
+		impl <A, T, const N: usize, O> $Op <T, [T; N]>
+		for ParallelAlgebra <A, T>
 		where T: Clone, A: Clone + for <'a> $Op <&'a T, T, Output = O>
 		{
 			type Output = [O; N];
@@ -309,7 +331,8 @@ macro_rules! impl_bin_op_trait
 			}
 		}
 
-		impl <'a, A, T, const N: usize, O> $Op <T, &'a [T; N]> for Parallel <A, T>
+		impl <'a, A, T, const N: usize, O> $Op <T, &'a [T; N]>
+		for ParallelAlgebra <A, T>
 		where T: Clone, A: Clone + for <'b> $Op <&'b T, &'a T, Output = O>
 		{
 			type Output = [O; N];
@@ -322,7 +345,8 @@ macro_rules! impl_bin_op_trait
 			}
 		}
 
-		impl <'a, A, T, const N: usize> $Op <&'a T, [T; N]> for Parallel <A, T>
+		impl <'a, A, T, const N: usize> $Op <&'a T, [T; N]>
+		for ParallelAlgebra <A, T>
 		where T: Clone, A: Clone + $Op <&'a T, T>
 		{
 			type Output = [A::Output; N];
@@ -334,7 +358,7 @@ macro_rules! impl_bin_op_trait
 		}
 
 		impl <'a, 'b, A, T, const N: usize> $Op <&'a T, &'b [T; N]>
-		for Parallel <A, T>
+		for ParallelAlgebra <A, T>
 		where T: Clone, A: Clone + $Op <&'a T, &'b T>
 		{
 			type Output = [A::Output; N];
@@ -349,7 +373,7 @@ macro_rules! impl_bin_op_trait
 
 		forward_traits!
 		(
-			for Parallel . a
+			for ParallelAlgebra . a
 			impl $Op <T, T>
 				+ for <'a> $Op <T, &'a T>
 				+ for <'a> $Op <&'a T, T>
@@ -367,7 +391,8 @@ macro_rules! impl_op_assign_trait
 {
 	($OpAssign: ident, $op_assign: ident, $opassignsym: tt) =>
 	{
-		impl <A, T, const N: usize> $OpAssign <[T; N], [T; N]> for Parallel <A, T>
+		impl <A, T, const N: usize> $OpAssign <[T; N], [T; N]>
+		for ParallelAlgebra <A, T>
 		where A: Clone + $OpAssign <T, T>
 		{
 			fn $op_assign (self, lhs: &mut [T; N], rhs: [T; N])
@@ -380,7 +405,7 @@ macro_rules! impl_op_assign_trait
 		}
 
 		impl <'a, A, T, const N: usize> $OpAssign <[T; N], &'a [T; N]>
-		for Parallel <A, T>
+		for ParallelAlgebra <A, T>
 		where A: Clone + $OpAssign <T, &'a T>
 		{
 			fn $op_assign (self, lhs: &mut [T; N], rhs: &'a [T; N])
@@ -394,7 +419,8 @@ macro_rules! impl_op_assign_trait
 
 		// Scalar on RHS
 
-		impl <A, T, const N: usize> $OpAssign <[T; N], T> for Parallel <A, T>
+		impl <A, T, const N: usize> $OpAssign <[T; N], T>
+		for ParallelAlgebra <A, T>
 		where T: Clone, A: Clone + for <'a> $OpAssign <T, &'a T>
 		{
 			fn $op_assign (self, lhs: &mut [T; N], rhs: T)
@@ -407,7 +433,7 @@ macro_rules! impl_op_assign_trait
 		}
 
 		impl <'a, A, T, const N: usize> $OpAssign <[T; N], &'a T>
-		for Parallel <A, T>
+		for ParallelAlgebra <A, T>
 		where T: Clone, A: Clone + $OpAssign <T, &'a T>
 		{
 			fn $op_assign (self, lhs: &mut [T; N], rhs: &'a T)
@@ -423,7 +449,7 @@ macro_rules! impl_op_assign_trait
 
 		forward_traits!
 		(
-			for Parallel . a
+			for ParallelAlgebra . a
 			impl $OpAssign <T, T> + for <'a> $OpAssign <T, &'a T>
 		);
 	}
@@ -438,7 +464,8 @@ macro_rules! impl_bin_method_trait
 {
 	($Op: ident, $op: ident) =>
 	{
-		impl <A, T, const N: usize, X> $Op <[T; N], X> for Parallel <A, T>
+		impl <A, T, const N: usize, X> $Op <[T; N], X>
+		for ParallelAlgebra <A, T>
 		where
 			A: Clone + $Op <T, X>,
 			X: Clone
@@ -451,7 +478,8 @@ macro_rules! impl_bin_method_trait
 			}
 		}
 
-		impl <'a, A, T, const N: usize, X> $Op <&'a [T; N], X> for Parallel <A, T>
+		impl <'a, A, T, const N: usize, X> $Op <&'a [T; N], X>
+		for ParallelAlgebra <A, T>
 		where
 			A: Clone + $Op <&'a T, X>,
 			X: Clone
@@ -460,7 +488,9 @@ macro_rules! impl_bin_method_trait
 
 			fn $op (self, lhs: &'a [T; N], rhs: X) -> Self::Output
 			{
-				lhs . each_ref () . map (|lhs_i| a! (self . a, lhs_i . $op (rhs . clone ())))
+				lhs
+					. each_ref ()
+					. map (|lhs_i| a! (self . a, lhs_i . $op (rhs . clone ())))
 			}
 		}
 
@@ -468,7 +498,7 @@ macro_rules! impl_bin_method_trait
 
 		forward_traits!
 		(
-			for Parallel . a
+			for ParallelAlgebra . a
 			impl for <X> $Op <T, X> + for <'a, X> $Op <&'a T, X>
 		);
 	}
@@ -479,9 +509,9 @@ impl_bin_method_trait! (Pow, pow);
 
 macro_rules! impl_value_trait
 {
-	($Value: ident, $value: ident, $is_value: ident, $reduction: tt) =>
+	($Value: ident, $value: ident, $is_value: ident, $init: expr, $reduction: tt) =>
 	{
-		impl <A, T, const N: usize> $Value <[T; N]> for Parallel <A, T>
+		impl <A, T, const N: usize> $Value <[T; N]> for ParallelAlgebra <A, T>
 		where A: Clone + $Value <T>
 		{
 			fn $value (self) -> [T; N]
@@ -494,23 +524,53 @@ macro_rules! impl_value_trait
 				x
 					. iter ()
 					. map (|x_i| a! (self . a, x_i . $is_value ()))
-					. fold (true, |v, item| v $reduction item)
+					. fold ($init, |v, item| v $reduction item)
 			}
 		}
 
-		forward_traits! (for Parallel . a impl $Value <T>);
+		forward_traits! (for ParallelAlgebra . a impl $Value <T>);
 	}
 }
 
-impl_value_trait! (Zero, zero, is_zero, &&);
-impl_value_trait! (One, one, is_one, &&);
-impl_value_trait! (E, e, is_e, &&);
-impl_value_trait! (Pi, pi, is_pi, &&);
-impl_value_trait! (Inf, inf, is_inf, ||);
-impl_value_trait! (NaN, nan, is_nan, ||);
+impl_value_trait! (Zero, zero, is_zero, true, &&);
+impl_value_trait! (One, one, is_one, true, &&);
+impl_value_trait! (E, e, is_e, true, &&);
+impl_value_trait! (Pi, pi, is_pi, true, &&);
+impl_value_trait! (Inf, inf, is_inf, false, ||);
+impl_value_trait! (NaN, nan, is_nan, false, ||);
+
+#[derive (Copy, Clone)]
+pub struct ParallelAccumulatorAlgebra <A, T>
+where A: Accumulatable <T>
+{
+	a: A::AccumulatorAlgebra
+}
+
+impl <A, T> ParallelAccumulatorAlgebra <A, T>
+where A: Accumulatable <T>
+{
+	pub fn new (a: A::AccumulatorAlgebra) -> Self
+	{
+		Self {a}
+	}
+}
+
+impl <A, T, const N: usize> Accumulatable <[T; N]> for ParallelAlgebra <A, T>
+where
+	A: Clone + Accumulatable <T>,
+	ParallelAlgebra <A::AccumulatorAlgebra, T>: Zero <[A::Accumulator; N]>
+{
+	type AccumulatorAlgebra = ParallelAlgebra <A::AccumulatorAlgebra, T>;
+	type Accumulator = [A::Accumulator; N];
+
+	fn accumulator (self) -> Self::AccumulatorAlgebra
+	{
+		ParallelAlgebra::new (self . a . accumulator ())
+	}
+}
 
 impl <A, T, const N: usize> Convert <[A::Accumulator; N], [T; N]>
-for Parallel <A, T>
+for ParallelAlgebra <A, T>
 where A: Clone + Accumulatable <T>
 {
 	fn convert (self, x: [A::Accumulator; N]) -> [T; N]
@@ -519,29 +579,58 @@ where A: Clone + Accumulatable <T>
 	}
 }
 
-impl <A, T, const N: usize> Accumulatable <[T; N]> for Parallel <A, T>
+impl <A, T, const N: usize> Zero <[A::Accumulator; N]>
+for ParallelAccumulatorAlgebra <A, T>
 where
-	A: Clone + Accumulatable <T>,
-	Parallel <A::AccumulatorAlgebra, T>: Zero <[A::Accumulator; N]>
+	A: Accumulatable <T>,
+	A::AccumulatorAlgebra: Clone + Zero <A::Accumulator>
 {
-	type AccumulatorAlgebra = Parallel <A::AccumulatorAlgebra, T>;
-	type Accumulator = [A::Accumulator; N];
-
-	fn accumulator (self) -> Self::AccumulatorAlgebra
+	fn zero (self) -> [A::Accumulator; N]
 	{
-		Parallel::new (self . a . accumulator ())
+		std::array::from_fn (|_| a! (self . a, A::Accumulator::zero ()))
+	}
+
+	fn is_zero (self, x: &[A::Accumulator; N]) -> bool
+	{
+		x
+			. iter ()
+			. map (|x_i| a! (self . a, x_i . is_zero ()))
+			. fold (true, |v, item| v && item)
 	}
 }
 
-forward_traits!
-(
-	for Parallel . a
-	impl Convert <A::Accumulator, T> where A: Accumulatable <T>;
-		+ Accumulatable <T>
-);
+impl <A, T, const N: usize> AddAssign <[A::Accumulator; N], [T; N]>
+for ParallelAccumulatorAlgebra <A, T>
+where
+	A: Accumulatable <T>,
+	A::AccumulatorAlgebra: Clone + AddAssign <A::Accumulator, T>
+{
+	fn add_assign (self, lhs: &mut [A::Accumulator; N], rhs: [T; N])
+	{
+		for (lhs_i, rhs_i) in lhs . iter_mut () . zip (rhs . into_iter ())
+		{
+			a! (self . a, *lhs_i += rhs_i);
+		}
+	}
+}
+
+impl <'a, A, T, const N: usize> AddAssign <[A::Accumulator; N], &'a [T; N]>
+for ParallelAccumulatorAlgebra <A, T>
+where
+	A: Accumulatable <T>,
+	A::AccumulatorAlgebra: Clone + AddAssign <A::Accumulator, &'a T>
+{
+	fn add_assign (self, lhs: &mut [A::Accumulator; N], rhs: &'a [T; N])
+	{
+		for (lhs_i, rhs_i) in lhs . iter_mut () . zip (rhs . iter ())
+		{
+			a! (self . a, *lhs_i += rhs_i);
+		}
+	}
+}
 
 #[cfg (any (test, feature = "proptest"))]
-impl <A, T, const N: usize> UnitRange <[T; N]> for Parallel <A, T>
+impl <A, T, const N: usize> UnitRange <[T; N]> for ParallelAlgebra <A, T>
 where
 	A: Clone + UnitRange <T>,
 	T: Debug,

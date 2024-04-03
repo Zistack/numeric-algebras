@@ -242,3 +242,98 @@ pub fn def_symmetric_binary_op_impl (input: proc_macro::TokenStream)
 	}
 		. into ()
 }
+
+pub fn def_try_binary_op_impl (input: proc_macro::TokenStream)
+-> proc_macro::TokenStream
+{
+	let DefBinaryOp {pascal_op, snake_op, ..} = parse_macro_input! (input);
+
+	let pascal_try_op = format_ident! ("Try{}", pascal_op);
+	let snake_try_op = format_ident! ("try_{}", snake_op);
+
+	let pascal_try_ops = format_ident! ("{}s", pascal_try_op);
+
+	let pascal_try_ops_to_lhs = format_ident! ("{}ToLhs", pascal_try_ops);
+
+	let pascal_try_ops_monoid = format_ident! ("{}Monoid", pascal_try_ops);
+
+	quote!
+	{
+		numeric_algebras_macros::def_binary_op! (#pascal_op, #snake_op);
+
+		#[forward_traits::forwardable]
+		pub trait #pascal_try_op <Lhs, Rhs>
+		{
+			type Output;
+			type Error;
+
+			fn #snake_try_op (self, lhs: Lhs, rhs: Rhs)
+			-> std::result::Result <Self::Output, Self::Error>;
+		}
+
+		pub trait #pascal_try_ops <Lhs, Rhs>:
+			#pascal_try_op
+			<
+				Lhs,
+				Rhs,
+				Output = <Self as #pascal_try_ops <Lhs, Rhs>>::Output,
+				Error = <Self as #pascal_try_ops <Lhs, Rhs>>::Error
+			>
+			+ for <'a> #pascal_try_op
+			<
+				Lhs,
+				&'a Rhs,
+				Output = <Self as #pascal_try_ops <Lhs, Rhs>>::Output,
+				Error = <Self as #pascal_try_ops <Lhs, Rhs>>::Error
+			>
+			+ for <'a> #pascal_try_op
+			<
+				&'a Lhs,
+				Rhs,
+				Output = <Self as #pascal_try_ops <Lhs, Rhs>>::Output,
+				Error = <Self as #pascal_try_ops <Lhs, Rhs>>::Error
+			>
+			+ for <'a, 'b> #pascal_try_op
+			<
+				&'a Lhs,
+				&'b Rhs,
+				Output = <Self as #pascal_try_ops <Lhs, Rhs>>::Output,
+				Error = <Self as #pascal_try_ops <Lhs, Rhs>>::Error
+			>
+		{
+			type Output;
+			type Error;
+		}
+
+		impl <Lhs, Rhs, O, E, T> #pascal_try_ops <Lhs, Rhs> for T
+		where T:
+			#pascal_try_op <Lhs, Rhs, Output = O, Error = E>
+			+ for <'a> #pascal_try_op <Lhs, &'a Rhs, Output = O, Error = E>
+			+ for <'a> #pascal_try_op <&'a Lhs, Rhs, Output = O, Error = E>
+			+ for <'a, 'b> #pascal_try_op <&'a Lhs, &'b Rhs, Output = O, Error = E>
+		{
+			type Output = O;
+			type Error = E;
+		}
+
+		pub trait #pascal_try_ops_to_lhs <Lhs, Rhs>:
+			#pascal_try_ops <Lhs, Rhs, Output = Lhs>
+		{
+		}
+
+		impl <Lhs, Rhs, T> #pascal_try_ops_to_lhs <Lhs, Rhs> for T
+		where T: #pascal_try_ops <Lhs, Rhs, Output = Lhs>
+		{
+		}
+
+		pub trait #pascal_try_ops_monoid <X>: #pascal_try_ops <X, X, Output = X>
+		{
+		}
+
+		impl <X, T> #pascal_try_ops_monoid <X> for T
+		where T: #pascal_try_ops <X, X, Output = X>
+		{
+		}
+	}
+		. into ()
+}

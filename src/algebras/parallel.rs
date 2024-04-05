@@ -539,33 +539,51 @@ impl_value_trait! (Pi, pi, is_pi, true, &&);
 impl_value_trait! (Inf, inf, is_inf, false, ||);
 impl_value_trait! (NaN, nan, is_nan, false, ||);
 
-#[derive (Copy, Clone)]
 pub struct ParallelAccumulatorAlgebra <A, T>
-where A: Accumulatable <T>
 {
-	a: A::AccumulatorAlgebra
+	a: A,
+	_t: PhantomData <T>
 }
 
 impl <A, T> ParallelAccumulatorAlgebra <A, T>
-where A: Accumulatable <T>
 {
-	pub fn new (a: A::AccumulatorAlgebra) -> Self
+	pub fn new (a: A) -> Self
 	{
-		Self {a}
+		Self {a, _t: PhantomData::<T>::default ()}
+	}
+
+	pub fn t_accumulator (self) -> <A as Accumulatable <T>>::AccumulatorAlgebra
+	where A: Accumulatable <T>
+	{
+		self . a . accumulator ()
+	}
+}
+
+impl <A, T> Copy for ParallelAccumulatorAlgebra <A, T>
+where A: Copy
+{
+}
+
+impl <A, T> Clone for ParallelAccumulatorAlgebra <A, T>
+where A: Clone
+{
+	fn clone (&self) -> Self
+	{
+		Self::new (self . a . clone ())
 	}
 }
 
 impl <A, T, const N: usize> Accumulatable <[T; N]> for ParallelAlgebra <A, T>
 where
 	A: Clone + Accumulatable <T>,
-	ParallelAlgebra <A::AccumulatorAlgebra, T>: Zero <[A::Accumulator; N]>
+	A::AccumulatorAlgebra: Clone + Zero <A::Accumulator>
 {
-	type AccumulatorAlgebra = ParallelAlgebra <A::AccumulatorAlgebra, T>;
+	type AccumulatorAlgebra = ParallelAccumulatorAlgebra <A, T>;
 	type Accumulator = [A::Accumulator; N];
 
 	fn accumulator (self) -> Self::AccumulatorAlgebra
 	{
-		ParallelAlgebra::new (self . a . accumulator ())
+		ParallelAccumulatorAlgebra::new (self . a)
 	}
 }
 
@@ -587,14 +605,17 @@ where
 {
 	fn zero (self) -> [A::Accumulator; N]
 	{
-		std::array::from_fn (|_| a! (self . a, A::Accumulator::zero ()))
+		let t_accumulator = self . t_accumulator ();
+		std::array::from_fn (|_| a! (t_accumulator, A::Accumulator::zero ()))
 	}
 
 	fn is_zero (self, x: &[A::Accumulator; N]) -> bool
 	{
+		let t_accumulator = self . t_accumulator ();
+
 		x
 			. iter ()
-			. map (|x_i| a! (self . a, x_i . is_zero ()))
+			. map (|x_i| a! (t_accumulator, x_i . is_zero ()))
 			. fold (true, |v, item| v && item)
 	}
 }
@@ -607,9 +628,11 @@ where
 {
 	fn add_assign (self, lhs: &mut [A::Accumulator; N], rhs: [T; N])
 	{
+		let t_accumulator = self . t_accumulator ();
+
 		for (lhs_i, rhs_i) in lhs . iter_mut () . zip (rhs . into_iter ())
 		{
-			a! (self . a, *lhs_i += rhs_i);
+			a! (t_accumulator, *lhs_i += rhs_i);
 		}
 	}
 }
@@ -622,9 +645,11 @@ where
 {
 	fn add_assign (self, lhs: &mut [A::Accumulator; N], rhs: &'a [T; N])
 	{
+		let t_accumulator = self . t_accumulator ();
+
 		for (lhs_i, rhs_i) in lhs . iter_mut () . zip (rhs . iter ())
 		{
-			a! (self . a, *lhs_i += rhs_i);
+			a! (t_accumulator, *lhs_i += rhs_i);
 		}
 	}
 }

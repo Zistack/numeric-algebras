@@ -1,11 +1,10 @@
 #![feature (maybe_uninit_uninit_array)]
 #![feature (maybe_uninit_array_assume_init)]
 
-pub mod traits;
 mod macros;
 
-mod algebras;
-pub use algebras::*;
+pub mod traits;
+pub mod algebras;
 
 pub use abstract_algebras::use_algebra;
 
@@ -20,8 +19,8 @@ macro_rules! a
 			(-)
 			(+, -, *, /, +=, -=, *=, /=)
 			(abs, recip, sqrt, pow, log, exp, ln, sin, cos, tan, sin_cos,
-				is_zero, is_one, is_e, is_pi, is_inf, is_nan, accumulate, sum,
-				convert)
+				is_zero, is_one, is_e, is_pi, is_inf, is_nan, sum, convert,
+				try_convert, approx_convert)
 			(zero, one, e, pi, inf, nan, zero_accumulator)
 		)
 	}

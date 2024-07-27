@@ -2,7 +2,7 @@
 use proptest::strategy::Strategy;
 
 use crate::traits::*;
-use crate::macros::*;
+use crate::macros::impl_traits::*;
 
 macro_rules! impl_traits_for_ty
 {
@@ -33,8 +33,19 @@ macro_rules! impl_traits_for_ty
 		impl_op_assigns! ($T, MulAssign, mul_assign, *=, $Algebra);
 		impl_op_assigns! ($T, DivAssign, div_assign, /=, $Algebra);
 
+		impl AdditionIsCommutative <$T, $T> for $Algebra
+		{
+		}
+
+		impl MultiplicationIsCommutative <$T, $T> for $Algebra
+		{
+		}
+
 		impl_bin_methods! ($T, Log, log, log, $Algebra);
 		impl_bin_methods! ($T, Pow, pow, powf, $Algebra);
+
+		impl_method_assigns! ($T, LogAssign, log_assign, log, $Algebra);
+		impl_method_assigns! ($T, PowAssign, pow_assign, powf, $Algebra);
 
 		impl_value_partialeq! ($T, Zero, zero, is_zero, 0.0, $Algebra);
 		impl_value_partialeq! ($T, One, one, is_one, 1.0, $Algebra);

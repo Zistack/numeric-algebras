@@ -1,6 +1,6 @@
-use numeric_algebras_macros::*;
-
 use forward_traits::forwardable;
+
+use crate::macros::def_traits::*;
 
 // Unary
 
@@ -37,11 +37,11 @@ where T: SinCos <X, Output = O> + for <'a> SinCos <&'a X, Output = O>
 	type Output = O;
 }
 
-pub trait SinCossMonoid <X>: SinCoss <X, Output = X>
+pub trait SinCossToSelf <X>: SinCoss <X, Output = X>
 {
 }
 
-impl <X, T> SinCossMonoid <X> for T
+impl <X, T> SinCossToSelf <X> for T
 where T: SinCoss <X, Output = X>
 {
 }
@@ -53,5 +53,5 @@ def_binary_op! (Sub, sub);
 def_symmetric_binary_op! (Multiplication, Mul, mul);
 def_binary_op! (Div, div);
 
-def_try_binary_op! (Pow, pow);
-def_try_binary_op! (Log, log);
+def_binary_op! (Pow, pow);
+def_binary_op! (Log, log);

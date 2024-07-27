@@ -17,11 +17,11 @@ where T: Sum <X, Y> + for <'a> Sum <X, &'a Y>
 {
 }
 
-pub trait SumsMonoid <X>: Sums <X, X>
+pub trait SumsToSelf <X>: Sums <X, X>
 {
 }
 
-impl <X, T> SumsMonoid <X> for T
+impl <X, T> SumsToSelf <X> for T
 where T: Sums <X, X>
 {
 }

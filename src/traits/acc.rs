@@ -12,25 +12,29 @@ pub trait Accumulatable <X>: Convert <Self::Accumulator, X>
 }
 
 pub trait Acc <X, Y>: Accumulatable <X>
-where Self::AccumulatorAlgebra: AddAssign <Self::Accumulator, Y>
+where Self::AccumulatorAlgebra: Zero <Self::Accumulator>
+	+ AddAssign <Self::Accumulator, Y>
 {
 }
 
 impl <X, Y, T> Acc <X, Y> for T
 where
 	T: Accumulatable <X>,
-	T::AccumulatorAlgebra: Zero <T::Accumulator> + AddAssign <T::Accumulator, Y>
+	T::AccumulatorAlgebra: Zero <T::Accumulator>
+		+ AddAssign <T::Accumulator, Y>
 {
 }
 
 pub trait Accs <X, Y>: Acc <X, Y> + for <'a> Acc <X, &'a Y>
-where Self::AccumulatorAlgebra: AddAssigns <Self::Accumulator, Y>
+where Self::AccumulatorAlgebra: Zero <Self::Accumulator>
+	+ AddAssigns <Self::Accumulator, Y>
 {
 }
 
 impl <X, Y, T> Accs <X, Y> for T
 where
 	T: Acc <X, Y> + for <'a> Acc <X, &'a Y>,
-	T::AccumulatorAlgebra: Zero <T::Accumulator> + AddAssigns <T::Accumulator, Y>
+	T::AccumulatorAlgebra: Zero <T::Accumulator>
+		+ AddAssigns <T::Accumulator, Y>
 {
 }

@@ -1,3 +1,33 @@
+macro_rules! impl_convert
+{
+	($X: ty, $Y: ty, $Algebra: ty) =>
+	{
+		impl Convert <$X, $Y> for $Algebra
+		{
+			fn convert (self, x: $X) -> $Y
+			{
+				<$Y>::from (x)
+			}
+		}
+	}
+}
+pub (crate) use impl_convert;
+
+macro_rules! impl_approx_convert
+{
+	($X: ty, $Y: ty, $Algebra: ty) =>
+	{
+		impl ApproxConvert <$X, $Y> for $Algebra
+		{
+			fn approx_convert (self, x: $X) -> $Y
+			{
+				(x as $Y)
+			}
+		}
+	}
+}
+pub (crate) use impl_approx_convert;
+
 macro_rules! impl_unary_ops
 {
 	($T: ty, $Op: ident, $op: ident, $opsym: tt, $Algebra: ty) =>
@@ -149,45 +179,9 @@ macro_rules! impl_op_assigns
 }
 pub (crate) use impl_op_assigns;
 
-macro_rules! impl_convert
-{
-	($X: ty, $Y: ty, $Algebra: ty) =>
-	{
-		impl Convert <$X, $Y> for $Algebra
-		{
-			fn convert (self, x: $X) -> $Y
-			{
-				<$Y>::from (x)
-			}
-		}
-	}
-}
-pub (crate) use impl_convert;
-
-macro_rules! impl_approx_convert
-{
-	($X: ty, $Y: ty, $Algebra: ty) =>
-	{
-		impl ApproxConvert <$X, $Y> for $Algebra
-		{
-			fn approx_convert (self, x: $X) -> $Y
-			{
-				(x as $Y)
-			}
-		}
-	}
-}
-pub (crate) use impl_approx_convert;
-
 macro_rules! impl_bin_methods
 {
-	(
-		$T: ty,
-		$Op: ident,
-		$op: ident,
-		$inner_op: ident,
-		$Algebra: ty
-	) =>
+	($T: ty, $Op: ident, $op: ident, $inner_op: ident, $Algebra: ty) =>
 	{
 		impl $Op <$T, $T> for $Algebra
 		{
@@ -231,6 +225,35 @@ macro_rules! impl_bin_methods
 	}
 }
 pub (crate) use impl_bin_methods;
+
+macro_rules! impl_method_assigns
+{
+	(
+		$T: ty,
+		$OpAssign: ident,
+		$op_assign: ident,
+		$inner_op: ident,
+		$Algebra: ty
+	) =>
+	{
+		impl $OpAssign <$T, $T> for $Algebra
+		{
+			fn $op_assign (self, lhs: &mut $T, rhs: $T)
+			{
+				*lhs = lhs . $inner_op (rhs);
+			}
+		}
+
+		impl <'a> $OpAssign <$T, &'a $T> for $Algebra
+		{
+			fn $op_assign (self, lhs: &mut $T, rhs: &'a $T)
+			{
+				*lhs = lhs . $inner_op (*rhs);
+			}
+		}
+	}
+}
+pub (crate) use impl_method_assigns;
 
 macro_rules! impl_value_partialeq
 {

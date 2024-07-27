@@ -1,4 +1,4 @@
-workspace = { members = ["macros"] }
+workspace = { members = [ "core","macros"] }
 [package]
 name = "numeric-algebras"
 version = "0.1.0"
@@ -7,14 +7,20 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+numeric-algebras-core = {path = "core"}
 numeric-algebras-macros = {path = "macros"}
+
 abstract-algebras = {path = "../abstract-algebras"}
 forward-traits = {version = "3.0"}
+
+paste = {version = "1.0"}
 
 proptest = {version = "1.4", optional = true}
 
 [dev-dependencies]
 proptest = {version = "1.4"}
+trybuild = {version = "1.0"}
+macrospace = {path = "../macrospace"}
 
 [features]
 proptest = ["dep:proptest"]

@@ -16,6 +16,7 @@ use syn_derive::{Parse, ToTokens};
 use quote::{ToTokens, format_ident, quote};
 
 use macrospace::generics::combine_generics;
+use macrospace::path_utils::without_arguments;
 use macrospace::substitute::{
 	substitute_arguments_for_struct,
 	substitute_arguments_for_derive_input
@@ -281,6 +282,10 @@ fn try_def_marker_trait_impl
 		..
 	}
 		= &def_marker_trait;
+
+	let lhs_type = without_arguments (lhs_type . clone ());
+	let rhs_type = without_arguments (rhs_type . clone ());
+	let algebra_type = without_arguments (algebra_type . clone ());
 
 	let inner_macro_ident = format_ident! ("__def_{}_trait_inner", snake_marker);
 

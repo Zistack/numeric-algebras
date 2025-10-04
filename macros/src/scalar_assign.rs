@@ -18,6 +18,7 @@ use syn_derive::{Parse, ToTokens};
 use quote::{ToTokens, quote, format_ident};
 
 use macrospace::generics::combine_generics;
+use macrospace::path_utils::without_arguments;
 use macrospace::substitute::{
 	substitute_arguments_for_struct,
 	substitute_arguments_for_derive_input
@@ -321,6 +322,9 @@ fn try_def_scalar_assign_traits_impl
 		..
 	}
 		= &def_scalar_assign_traits;
+
+	let input_struct_type = without_arguments (input_struct_type . clone ());
+	let algebra_type = without_arguments (algebra_type . clone ());
 
 	let inner_macro_ident =
 		format_ident! ("__def_scalar_{}_assign_traits_inner", snake_op);

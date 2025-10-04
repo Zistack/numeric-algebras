@@ -17,6 +17,7 @@ use syn_derive::{Parse, ToTokens};
 use quote::{ToTokens, quote, format_ident};
 
 use macrospace::generics::combine_generics;
+use macrospace::path_utils::without_arguments;
 use macrospace::struct_utils::{constructor, get_member_types};
 use macrospace::substitute::{
 	substitute_arguments_for_struct,
@@ -322,6 +323,10 @@ fn try_def_sin_cos_traits_impl (input: proc_macro::TokenStream)
 		..
 	}
 		= &def_sin_cos_traits;
+
+	let input_type = without_arguments (input_type . clone ());
+	let output_type = without_arguments (output_type . clone ());
+	let algebra_type = without_arguments (algebra_type . clone ());
 
 	let inner_macro_path =
 		parse_quote! (numeric_algebras::derive::__def_sin_cos_traits_inner);

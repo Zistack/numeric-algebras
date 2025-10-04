@@ -9,10 +9,11 @@ edition = "2021"
 numeric-algebras-core = {path = "../core"}
 
 macrospace = {path = "../../macrospace"}
+macrospace-autotransform = {path = "../../macrospace-autotransform"}
 
 syn = {version = "2.0"}
 quote = {version = "1.0"}
-syn_derive = {version = "0.1"}
+syn_derive = {version = "0.2"}
 paste = {version = "1.0"}
 proc-macro2 = {version = "1.0"}
 

@@ -94,3 +94,19 @@ use scalar_marker::def_scalar_marker_trait_macro;
 
 def_scalar_marker_trait_macro! (AdditionIsCommutative, addition_is_commutative);
 def_scalar_marker_trait_macro! (MultiplicationIsCommutative, multiplication_is_commutative);
+
+mod arithmetic;
+
+#[proc_macro]
+pub fn def_arithmetic (input: TokenStream) -> TokenStream
+{
+	arithmetic::def_arithmetic_impl (input)
+}
+
+mod scalar_arithmetic;
+
+#[proc_macro]
+pub fn def_scalar_arithmetic (input: TokenStream) -> TokenStream
+{
+	scalar_arithmetic::def_scalar_arithmetic_impl (input)
+}

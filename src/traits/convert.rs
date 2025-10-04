@@ -1,12 +1,10 @@
-use forward_traits::forwardable;
-
-#[forwardable]
+#[macrospace::item]
 pub trait Convert <X, Y>
 {
 	fn convert (self, x: X) -> Y;
 }
 
-#[forwardable]
+#[macrospace::item]
 pub trait TryConvert <X, Y>
 {
 	type Error;
@@ -14,7 +12,7 @@ pub trait TryConvert <X, Y>
 	fn try_convert (self, x: X) -> Result <Y, Self::Error>;
 }
 
-#[forwardable]
+#[macrospace::item]
 pub trait ApproxConvert <X, Y>
 {
 	fn approx_convert (self, x: X) -> Y;

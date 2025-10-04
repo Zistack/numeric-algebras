@@ -1,5 +1,3 @@
-use forward_traits::forwardable;
-
 use crate::macros::def_traits::*;
 
 // Unary
@@ -16,7 +14,7 @@ def_unary_op! (Sin, sin);
 def_unary_op! (Cos, cos);
 def_unary_op! (Tan, tan);
 
-#[forwardable]
+#[macrospace::item]
 pub trait SinCos <X>
 {
 	type Output;

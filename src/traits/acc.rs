@@ -1,8 +1,6 @@
-use forward_traits::forwardable;
-
 use super::{Convert, AddAssign, AddAssigns, Zero};
 
-#[forwardable]
+#[macrospace::item]
 pub trait Accumulatable <X>: Convert <Self::Accumulator, X>
 {
 	type AccumulatorAlgebra: Zero <Self::Accumulator>;

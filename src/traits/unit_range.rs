@@ -1,9 +1,8 @@
 use std::fmt::Debug;
 
-use forward_traits::forwardable;
 use proptest::strategy::Strategy;
 
-#[forwardable]
+#[macrospace::item]
 pub trait UnitRange <X>
 where X: Debug
 {

@@ -1,6 +1,4 @@
-use forward_traits::forwardable;
-
-#[forwardable]
+#[macrospace::item]
 pub trait Zero <X>
 {
 	fn zero (self) -> X;
@@ -8,7 +6,7 @@ pub trait Zero <X>
 	fn is_zero (self, x: &X) -> bool;
 }
 
-#[forwardable]
+#[macrospace::item]
 pub trait One <X>
 {
 	fn one (self) -> X;
@@ -16,7 +14,7 @@ pub trait One <X>
 	fn is_one (self, x: &X) -> bool;
 }
 
-#[forwardable]
+#[macrospace::item]
 pub trait E <X>
 {
 	fn e (self) -> X;
@@ -24,7 +22,7 @@ pub trait E <X>
 	fn is_e (self, x: &X) -> bool;
 }
 
-#[forwardable]
+#[macrospace::item]
 pub trait Pi <X>
 {
 	fn pi (self) -> X;
@@ -32,7 +30,7 @@ pub trait Pi <X>
 	fn is_pi (self, x: &X) -> bool;
 }
 
-#[forwardable]
+#[macrospace::item]
 pub trait Inf <X>
 {
 	fn inf (self) -> X;
@@ -40,7 +38,7 @@ pub trait Inf <X>
 	fn is_inf (self, x: &X) -> bool;
 }
 
-#[forwardable]
+#[macrospace::item]
 pub trait NaN <X>
 {
 	fn nan (self) -> X;

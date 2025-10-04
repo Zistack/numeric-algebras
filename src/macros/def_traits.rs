@@ -4,7 +4,7 @@ macro_rules! __def_unary_op
 	{
 		paste::paste!
 		{
-			#[forward_traits::forwardable]
+			#[macrospace::item]
 			pub trait $PascalOp <X>
 			{
 				type Output;
@@ -46,7 +46,7 @@ macro_rules! __def_binary_op
 	{
 		paste::paste!
 		{
-			#[forward_traits::forwardable]
+			#[macrospace::item]
 			pub trait $PascalOp <X, Y>
 			{
 				type Output;
@@ -72,7 +72,7 @@ macro_rules! __def_binary_op
 				type Output = O;
 			}
 
-			#[forward_traits::forwardable]
+			#[macrospace::item]
 			pub trait [<$PascalOp Assign>] <X, Y>
 			{
 				fn [<$snake_op _assign>] (self, x: &mut X, y: Y);
@@ -141,7 +141,7 @@ macro_rules! __def_symmetric_binary_op
 				type Output = O;
 			}
 
-			#[forward_traits::forwardable]
+			#[macrospace::item]
 			pub trait [<$PascalOperation IsCommutative>] <X, Y>
 			{
 			}

@@ -11,7 +11,7 @@ numeric-algebras-core = {path = "core"}
 numeric-algebras-macros = {path = "macros"}
 
 abstract-algebras = {path = "../abstract-algebras"}
-forward-traits = {version = "3.0"}
+macrospace = {path = "../macrospace"}
 
 paste = {version = "1.0"}
 
@@ -20,7 +20,7 @@ proptest = {version = "1.4", optional = true}
 [dev-dependencies]
 proptest = {version = "1.4"}
 trybuild = {version = "1.0"}
-macrospace = {path = "../macrospace"}
+macrospace-autotransform = {path = "../macrospace-autotransform"}
 
 [features]
 proptest = ["dep:proptest"]

@@ -8,6 +8,6 @@ macrospace = {path = "../../macrospace"}
 
 syn = {version = "2.0", features = ["fold"]}
 quote = {version = "1.0"}
-syn_derive = {version = "0.1"}
+syn_derive = {version = "0.2"}
 proc-macro2 = {version = "1.0"}
-itertools = {version = "0.12"}
+itertools = {version = "0.14"}

@@ -282,7 +282,11 @@ impl AlgebraMapping
 			Error::new_spanned
 			(
 				attribute_tokens,
-				"Attribute required: algebra_mapping"
+				format_args!
+				(
+					"Missing algebra_mapping attribute for `{}`",
+					multipart_type . to_token_stream ()
+				)
 			)
 		};
 

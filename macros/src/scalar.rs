@@ -880,7 +880,7 @@ fn try_def_scalar_traits_impl
 
 	let input_struct_type = without_arguments (input_struct_type . clone ());
 	let output_type = without_arguments (output_type . clone ());
-	let algebra_type = without_arguments (output_type . clone ());
+	let algebra_type = without_arguments (algebra_type . clone ());
 
 	let inner_macro_ident =
 		format_ident! ("__def_scalar_{}_traits_inner", snake_op);

@@ -64,7 +64,7 @@ where C: Default + ToTokens
 
 	let constructor = constructor
 	(
-		&parse_quote! (#struct_type),
+		&struct_type,
 		&members,
 		&algebra_conversion_expressions
 			. iter ()

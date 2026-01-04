@@ -29,7 +29,5 @@ macro_rules! a
 
 pub use numeric_algebras_core::{
 	algebra_mapping,
-	field_algebras,
-	variant_algebras,
-	check_parts
+	check_num_parts
 };

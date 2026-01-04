@@ -17,20 +17,21 @@ use syn::parse::{Result, Error};
 use syn_derive::{Parse, ToTokens};
 use quote::format_ident;
 
+use macrospace::enum_utils::{get_variants, get_variant_types};
 use macrospace::generics::combine_generics;
 use macrospace::path_utils::without_arguments;
-use macrospace::struct_utils::get_member_types;
+use macrospace::struct_utils::{
+	get_members,
+	get_member_types,
+	get_members_and_types_split
+};
 use macrospace::substitute::{
 	substitute_arguments_for_struct,
 	substitute_arguments_for_derive_input
 };
 
-use numeric_algebras_core::algebra_mapping::{AlgebraMapping, TypeParts};
-use numeric_algebras_core::check_parts::{
-	check_num_parts,
-	check_algebra_type_pair,
-	check_algebra_conversion_expression_pairs
-};
+use numeric_algebras_core::check_num_parts;
+use numeric_algebras_core::algebra_mapping::AlgebraMapping;
 
 #[derive (Parse, ToTokens)]
 struct DefBinaryTraits
@@ -87,125 +88,102 @@ fn try_def_binary_traits_inner_impl
 		= macrospace::parse_args! (4, input)?;
 
 	let (mut algebra_substitutions, substituted_algebra_item) =
-		substitute_arguments_for_derive_input (algebra_item, &algebra_type)?;
+		substitute_arguments_for_derive_input (algebra_item . clone (), &algebra_type)?;
 
 	let (_, substituted_lhs_item) = substitute_arguments_for_struct
 	(
-		lhs_item . clone (),
+		lhs_item,
 		&lhs_type
 	)?;
+
+	let (lhs_members, lhs_member_types) =
+		get_members_and_types_split (&substituted_lhs_item . fields);
 
 	let (_, substituted_rhs_item) = substitute_arguments_for_derive_input
 	(
-		rhs_item . clone (),
+		rhs_item,
 		&rhs_type
 	)?;
+
+	let rhs_part_types = match &substituted_rhs_item . data
+	{
+		Data::Struct (struct_data) =>
+		{
+			check_num_parts
+			(
+				substituted_lhs_item . fields . len (),
+				struct_data . fields . len (),
+				&lhs_type,
+				&rhs_type,
+				"LHS",
+				"RHS"
+			)?;
+
+			get_member_types (&struct_data . fields)
+		},
+		Data::Enum (enum_data) =>
+		{
+			check_num_parts
+			(
+				substituted_lhs_item . fields . len (),
+				enum_data . variants . len (),
+				&lhs_type,
+				&rhs_type,
+				"LHS",
+				"RHS"
+			)?;
+
+			get_variant_types (&enum_data . variants)?
+		}
+		_ => unreachable! ()
+	};
 
 	let (_, substituted_output_item) = substitute_arguments_for_struct
 	(
-		output_item . clone (),
+		output_item,
 		&output_type
 	)?;
 
-	let lhs_algebra_mapping = AlgebraMapping::get_from_attributes
-	(
-		&substituted_algebra_item . attrs,
-		&mut algebra_substitutions,
-		&lhs_type
-	)?;
-
-	let rhs_algebra_mapping = AlgebraMapping::get_from_attributes
-	(
-		&substituted_algebra_item . attrs,
-		&mut algebra_substitutions,
-		&rhs_type
-	)?;
-
-	let (lhs_member_algebras, lhs_members, lhs_algebra_conversion_expressions) =
-		lhs_algebra_mapping . into_struct_parts (substituted_lhs_item . fields)?;
-
-	let (rhs_part_algebras, rhs_parts, rhs_algebra_conversion_expressions) =
-		rhs_algebra_mapping . into_parts (substituted_rhs_item . clone ())?;
-
-	let output_member_types =
-		get_member_types (&substituted_output_item . fields);
-
-	match (&rhs_parts, &rhs_item . data)
-	{
-		(TypeParts::Struct (rhs_members), Data::Struct (struct_data)) => check_num_parts
-		(
-			&lhs_members,
-			&rhs_members,
-			&lhs_item . fields,
-			&struct_data . fields,
-			"LHS",
-			"RHS"
-		)?,
-		(TypeParts::Enum (rhs_variants), Data::Enum (enum_data)) => check_num_parts
-		(
-			&lhs_members,
-			&rhs_variants,
-			&lhs_item . fields,
-			&enum_data . variants,
-			"LHS",
-			"RHS"
-		)?,
-		_ => unreachable! ()
-	}
+	let (output_members, output_member_types) =
+		get_members_and_types_split (&substituted_output_item . fields);
 
 	check_num_parts
 	(
-		&lhs_members,
-		&output_member_types,
-		&lhs_item . fields,
-		&output_item . fields,
+		substituted_lhs_item . fields . len (),
+		substituted_output_item . fields . len (),
+		&lhs_type,
+		&output_type,
 		"Input",
 		"output"
 	)?;
 
-	let mut output_members = Vec::new ();
+	let algebra_mapping = AlgebraMapping::get_from_attributes
+	(
+		&algebra_item,
+		&substituted_algebra_item . attrs,
+		&mut algebra_substitutions
+	)?;
+
+	let (algebra_conversion_expressions, member_algebra_types) =
+		algebra_mapping . into_parts ();
+
 	let mut member_algebras = Vec::new ();
 
-	for
-	(
-		(
-			(lhs_member_algebra_type, lhs_member_type),
-			(rhs_part_algebra_type, rhs_part_type)
-		),
-		(output_member, output_member_type)
-	)
-	in lhs_member_algebras
+	for (((member_algebra_type, lhs_member_type), rhs_part_type), output_member_type)
+	in member_algebra_types
 		. into_iter ()
-		. zip (rhs_part_algebras)
+		. zip (lhs_member_types)
+		. zip (rhs_part_types)
 		. zip (output_member_types)
 	{
-		check_algebra_type_pair
-		(
-			&lhs_member_algebra_type,
-			&rhs_part_algebra_type,
-			"LHS",
-			"RHS"
-		)?;
-
-		output_members . push (output_member);
 		member_algebras . push
 		((
-			lhs_member_algebra_type,
+			member_algebra_type,
 			lhs_member_type,
 			rhs_part_type,
 			output_member_type
 		));
 	}
-
-	// I want to check that the types match before checking that the expressions
-	// match too.
-	check_algebra_conversion_expression_pairs
-	(
-		&lhs_algebra_conversion_expressions,
-		&rhs_algebra_conversion_expressions,
-		"LHS",
-		"RHS"
-	)?;
 
 	let generics = combine_generics
 	([
@@ -216,9 +194,9 @@ fn try_def_binary_traits_inner_impl
 		substituted_output_item . generics
 	]);
 
-	let tokens = match rhs_parts
+	let tokens = match &substituted_rhs_item . data
 	{
-		TypeParts::Struct (rhs_members) =>
+		Data::Struct (struct_data) =>
 		struct_traits::def_struct_binary_traits_inner
 		(
 			pascal_op,
@@ -230,11 +208,11 @@ fn try_def_binary_traits_inner_impl
 			generics,
 			member_algebras,
 			lhs_members,
-			rhs_members,
+			get_members (&struct_data . fields),
 			output_members,
-			lhs_algebra_conversion_expressions
+			algebra_conversion_expressions
 		),
-		TypeParts::Enum (rhs_variants) =>
+		Data::Enum (enum_data) =>
 		enum_traits::def_enum_binary_traits_inner
 		(
 			pascal_op,
@@ -246,10 +224,11 @@ fn try_def_binary_traits_inner_impl
 			generics,
 			member_algebras,
 			lhs_members,
-			rhs_variants,
+			get_variants (&enum_data . variants),
 			output_members,
-			lhs_algebra_conversion_expressions
-		)
+			algebra_conversion_expressions
+		),
+		_ => unreachable! ()
 	};
 
 	Ok (tokens)

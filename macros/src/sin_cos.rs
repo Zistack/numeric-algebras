@@ -18,14 +18,14 @@ use quote::{ToTokens, quote, format_ident};
 
 use macrospace::generics::combine_generics;
 use macrospace::path_utils::without_arguments;
-use macrospace::struct_utils::{constructor, get_member_types};
+use macrospace::struct_utils::{constructor, get_members_and_types_split};
 use macrospace::substitute::{
 	substitute_arguments_for_struct,
 	substitute_arguments_for_derive_input
 };
 
+use numeric_algebras_core::check_num_parts;
 use numeric_algebras_core::algebra_mapping::AlgebraMapping;
-use numeric_algebras_core::check_parts::check_num_parts;
 
 fn def_sin_cos_traits_inner
 (
@@ -220,60 +220,57 @@ fn try_def_sin_cos_traits_inner_impl (input: proc_macro::TokenStream)
 		= macrospace::parse_args! (3, input)?;
 
 	let (mut algebra_substitutions, substituted_algebra_item) =
-		substitute_arguments_for_derive_input (algebra_item, &algebra_type)?;
+		substitute_arguments_for_derive_input (algebra_item . clone (), &algebra_type)?;
 
 	let (_, substituted_input_item) = substitute_arguments_for_struct
 	(
-		input_item . clone (),
+		input_item,
 		&input_type
 	)?;
+
+	let (input_members, input_member_types) =
+		get_members_and_types_split (&substituted_input_item . fields);
 
 	let (_, substituted_output_item) = substitute_arguments_for_struct
 	(
-		output_item . clone (),
+		output_item,
 		&output_type
 	)?;
 
-	let input_algebra_mapping = AlgebraMapping::get_from_attributes
-	(
-		&substituted_algebra_item . attrs,
-		&mut algebra_substitutions,
-		&input_type
-	)?;
-
-	let (input_member_algebras, input_members, algebra_conversion_expressions) =
-		input_algebra_mapping
-		. into_struct_parts (substituted_input_item . fields)?;
-
-	let output_member_types = get_member_types
-	(
-		&substituted_output_item . fields
-	);
+	let (output_members, output_member_types) =
+		get_members_and_types_split (&substituted_output_item . fields);
 
 	check_num_parts
 	(
-		&input_members,
-		&output_member_types,
-		&input_item . fields,
-		&output_item . fields,
+		substituted_input_item . fields . len (),
+		substituted_output_item . fields . len (),
+		&input_type,
+		&output_type,
 		"Input",
 		"output"
 	)?;
 
-	let mut output_members = Vec::new ();
+	let algebra_mapping = AlgebraMapping::get_from_attributes
+	(
+		&algebra_item,
+		&substituted_algebra_item . attrs,
+		&mut algebra_substitutions
+	)?;
+
+	let (algebra_conversion_expressions, member_algebra_types) =
+		algebra_mapping . into_parts ();
+
 	let mut member_algebras = Vec::new ();
 
-	for
-	(
-		(input_member_algebra_type, input_member_type),
-		(output_member, output_member_type)
-	)
-	in input_member_algebras . into_iter () . zip (output_member_types)
+	for ((member_algebra_type, input_member_type), output_member_type)
+	in member_algebra_types
+		. into_iter ()
+		. zip (input_member_types)
+		. zip (output_member_types)
 	{
-		output_members . push (output_member);
 		member_algebras . push
 		((
-			input_member_algebra_type,
+			member_algebra_type,
 			input_member_type,
 			output_member_type
 		));

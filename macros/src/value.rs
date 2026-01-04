@@ -18,7 +18,7 @@ use quote::{ToTokens, quote, format_ident};
 
 use macrospace::generics::combine_generics;
 use macrospace::path_utils::without_arguments;
-use macrospace::struct_utils::constructor;
+use macrospace::struct_utils::{constructor, get_members_and_types_split};
 use macrospace::substitute::{
 	substitute_arguments_for_struct,
 	substitute_arguments_for_derive_input
@@ -140,7 +140,7 @@ where C: Default + ToTokens
 		= macrospace::parse_args! (2, input)?;
 
 	let (mut algebra_substitutions, substituted_algebra_item) =
-		substitute_arguments_for_derive_input (algebra_item, &algebra_type)?;
+		substitute_arguments_for_derive_input (algebra_item . clone (), &algebra_type)?;
 
 	let (_, substituted_struct_item) = substitute_arguments_for_struct
 	(
@@ -148,15 +148,26 @@ where C: Default + ToTokens
 		&struct_type
 	)?;
 
+	let (members, member_types) =
+		get_members_and_types_split (&substituted_struct_item . fields);
+
 	let algebra_mapping = AlgebraMapping::get_from_attributes
 	(
+		&algebra_item,
 		&substituted_algebra_item . attrs,
-		&mut algebra_substitutions,
-		&struct_type
+		&mut algebra_substitutions
 	)?;
 
-	let (member_algebras, members, algebra_conversion_expressions) =
-		algebra_mapping . into_struct_parts (substituted_struct_item . fields)?;
+	let (algebra_conversion_expressions, member_algebra_types) =
+		algebra_mapping . into_parts ();
+
+	let mut member_algebras = Vec::new ();
+
+	for (member_algebra_type, member_type)
+	in member_algebra_types . into_iter () . zip (member_types)
+	{
+		member_algebras . push ((member_algebra_type, member_type));
+	}
 
 	let generics = combine_generics
 	([

@@ -25,18 +25,8 @@ pub enum ChoiceType
 #[derive (Copy, Clone)]
 #[macrospace::item]
 #[algebra_mapping (
-	struct AggregateType
-	{
-		x => (|_a| F32Algebra): F32Algebra,
-		y => (|_a| F32Algebra): F32Algebra
-	}
-)]
-#[algebra_mapping (
-	enum ChoiceType
-	{
-		X => (|_a| F32Algebra): F32Algebra,
-		Y => (|_a| F32Algebra): F32Algebra
-	}
+	(|_a| F32Algebra): F32Algebra,
+	(|_a| F32Algebra): F32Algebra
 )]
 pub struct AggregateTypeAlgebra;
 
@@ -62,17 +52,7 @@ pub struct AggregateAccumulatorType
 #[derive (Copy, Clone)]
 #[macrospace::item]
 #[algebra_mapping (
-	struct AggregateType
-	{
-		x => (|_a| F32Algebra): F32Algebra,
-		y => (|_a| F32Algebra): F32Algebra
-	}
-)]
-#[algebra_mapping (
-	struct AggregateAccumulatorType
-	{
-		x => (|_a| F32Algebra): F32Algebra,
-		y => (|_a| F32Algebra): F32Algebra
-	}
+	(|_a| F32Algebra): F32Algebra,
+	(|_a| F32Algebra): F32Algebra
 )]
 pub struct AggregateAccumulatorTypeAlgebra;

@@ -15,19 +15,17 @@ use syn::parse::{Result, Error};
 use syn_derive::{Parse, ToTokens};
 use quote::{ToTokens, format_ident, quote};
 
+use macrospace::enum_utils::get_variant_types;
 use macrospace::generics::combine_generics;
 use macrospace::path_utils::without_arguments;
+use macrospace::struct_utils::get_member_types;
 use macrospace::substitute::{
 	substitute_arguments_for_struct,
 	substitute_arguments_for_derive_input
 };
 
-use numeric_algebras_core::algebra_mapping::{AlgebraMapping, TypeParts};
-use numeric_algebras_core::check_parts::{
-	check_num_parts,
-	check_algebra_type_pair,
-	check_algebra_conversion_expression_pairs
-};
+use numeric_algebras_core::check_num_parts;
+use numeric_algebras_core::algebra_mapping::AlgebraMapping;
 
 fn def_marker_trait_inner
 (
@@ -148,89 +146,73 @@ fn try_def_marker_trait_inner_impl
 		= macrospace::parse_args! (3, input)?;
 
 	let (mut algebra_substitutions, substituted_algebra_item) =
-		substitute_arguments_for_derive_input (algebra_item, &algebra_type)?;
+		substitute_arguments_for_derive_input (algebra_item . clone (), &algebra_type)?;
 
 	let (_, substituted_lhs_item) =
-		substitute_arguments_for_struct (lhs_item . clone (), &lhs_type)?;
+		substitute_arguments_for_struct (lhs_item, &lhs_type)?;
+
+	let lhs_member_types = get_member_types (&substituted_lhs_item . fields);
 
 	let (_, substituted_rhs_item) =
-		substitute_arguments_for_derive_input (rhs_item . clone (), &rhs_type)?;
+		substitute_arguments_for_derive_input (rhs_item, &rhs_type)?;
 
-	let lhs_algebra_mapping = AlgebraMapping::get_from_attributes
-	(
-		&substituted_algebra_item . attrs,
-		&mut algebra_substitutions,
-		&lhs_type
-	)?;
-
-	let rhs_algebra_mapping = AlgebraMapping::get_from_attributes
-	(
-		&substituted_algebra_item . attrs,
-		&mut algebra_substitutions,
-		&rhs_type
-	)?;
-
-	let (lhs_member_algebras, lhs_members, lhs_algebra_conversion_expressions) =
-		lhs_algebra_mapping . into_struct_parts (substituted_lhs_item . fields)?;
-
-	let (rhs_part_algebras, rhs_parts, rhs_algebra_conversion_expressions) =
-		rhs_algebra_mapping . into_parts (substituted_rhs_item . clone ())?;
-
-	match (&rhs_parts, &rhs_item . data)
+	let rhs_part_types = match &substituted_rhs_item . data
 	{
-		(TypeParts::Struct (rhs_members), Data::Struct (struct_data)) => check_num_parts
-		(
-			&lhs_members,
-			&rhs_members,
-			&lhs_item . fields,
-			&struct_data . fields,
-			"LHS",
-			"RHS"
-		)?,
-		(TypeParts::Enum (rhs_variants), Data::Enum (enum_data)) => check_num_parts
-		(
-			&lhs_members,
-			&rhs_variants,
-			&lhs_item . fields,
-			&enum_data . variants,
-			"LHS",
-			"RHS"
-		)?,
+		Data::Struct (struct_data) =>
+		{
+			check_num_parts
+			(
+				substituted_lhs_item . fields . len (),
+				struct_data . fields . len (),
+				&lhs_type,
+				&rhs_type,
+				"LHS",
+				"RHS"
+			)?;
+
+			get_member_types (&struct_data . fields)
+		},
+		Data::Enum (enum_data) =>
+		{
+			check_num_parts
+			(
+				substituted_lhs_item . fields . len (),
+				enum_data . variants . len (),
+				&rhs_type,
+				&lhs_type,
+				"LHS",
+				"RHS"
+			)?;
+
+			get_variant_types (&enum_data . variants)?
+		},
 		_ => unreachable! ()
-	}
+	};
+
+	let algebra_mapping = AlgebraMapping::get_from_attributes
+	(
+		&algebra_item,
+		&substituted_algebra_item . attrs,
+		&mut algebra_substitutions
+	)?;
+
+	let (_, member_algebra_types) = algebra_mapping . into_parts ();
 
 	let mut member_algebras = Vec::new ();
 
-	for
-	(
-		(lhs_member_algebra_type, lhs_member_type),
-		(rhs_part_algebra_type, rhs_part_type)
-	)
-	in lhs_member_algebras . into_iter () . zip (rhs_part_algebras)
+	for ((member_algebra_type, lhs_member_type), rhs_part_type)
+	in member_algebra_types
+		. into_iter ()
+		. zip (lhs_member_types)
+		. zip (rhs_part_types)
 	{
-		check_algebra_type_pair
-		(
-			&lhs_member_algebra_type,
-			&rhs_part_algebra_type,
-			"LHS",
-			"RHS"
-		)?;
-
 		member_algebras . push
 		((
-			lhs_member_algebra_type,
+			member_algebra_type,
 			lhs_member_type,
 			rhs_part_type
 		));
 	}
-
-	check_algebra_conversion_expression_pairs
-	(
-		&lhs_algebra_conversion_expressions,
-		&rhs_algebra_conversion_expressions,
-		"LHS",
-		"RHS"
-	)?;
 
 	let generics = combine_generics
 	([

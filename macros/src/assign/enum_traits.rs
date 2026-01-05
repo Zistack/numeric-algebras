@@ -22,7 +22,7 @@ pub fn def_enum_assign_traits_inner
 	mut generics: Generics,
 	member_algebras: Vec <(Type, Type, Type)>,
 	input_struct_members: Vec <Member>,
-	input_enum_variants: Vec <Ident>,
+	input_enum_variant_idents: Vec <Ident>,
 	algebra_conversion_expressions: Vec <Expr>
 )
 -> proc_macro2::TokenStream
@@ -99,7 +99,7 @@ pub fn def_enum_assign_traits_inner
 					match rhs
 					{
 						#(#input_enum_type_prefix
-							::#input_enum_variants (#var_names) =>
+							::#input_enum_variant_idents (#var_names) =>
 							#algebra_conversion_expressions (self)
 							. #snake_op_assign
 							(
@@ -170,7 +170,7 @@ pub fn def_enum_assign_traits_inner
 					match rhs
 					{
 						#(#input_enum_type_prefix
-							::#input_enum_variants (#var_names) =>
+							::#input_enum_variant_idents (#var_names) =>
 							#algebra_conversion_expressions (self)
 							. #snake_op_assign
 							(

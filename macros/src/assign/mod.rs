@@ -17,7 +17,7 @@ use syn::parse::{Result, Error};
 use syn_derive::{Parse, ToTokens};
 use quote::format_ident;
 
-use macrospace::enum_utils::{get_variants, get_variant_types};
+use macrospace::enum_utils::{get_variant_idents, get_variant_types};
 use macrospace::generics::combine_generics;
 use macrospace::path_utils::without_arguments;
 use macrospace::struct_utils::{
@@ -194,7 +194,7 @@ fn try_def_assign_traits_inner_impl
 			generics,
 			member_algebras,
 			lhs_members,
-			get_variants (&enum_data . variants),
+			get_variant_idents (&enum_data . variants),
 			algebra_conversion_expressions
 		),
 		_ => unreachable! ()

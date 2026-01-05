@@ -219,6 +219,16 @@ fn try_def_sin_cos_traits_inner_impl (input: proc_macro::TokenStream)
 		((DeriveInput, ItemStruct, ItemStruct), DefSinCosTraits)
 		= macrospace::parse_args! (3, input)?;
 
+	check_num_parts
+	(
+		input_item . fields . len (),
+		output_item . fields . len (),
+		&input_type,
+		&output_type,
+		"Input",
+		"output"
+	)?;
+
 	let (mut algebra_substitutions, substituted_algebra_item) =
 		substitute_arguments_for_derive_input (algebra_item . clone (), &algebra_type)?;
 
@@ -239,16 +249,6 @@ fn try_def_sin_cos_traits_inner_impl (input: proc_macro::TokenStream)
 
 	let (output_members, output_member_types) =
 		get_members_and_types_split (&substituted_output_item . fields);
-
-	check_num_parts
-	(
-		substituted_input_item . fields . len (),
-		substituted_output_item . fields . len (),
-		&input_type,
-		&output_type,
-		"Input",
-		"output"
-	)?;
 
 	let algebra_mapping = AlgebraMapping::get_from_attributes
 	(

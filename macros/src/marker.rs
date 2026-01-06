@@ -7,12 +7,12 @@ use syn::{
 	ItemStruct,
 	Data,
 	Token,
+	parenthesized,
 	parse,
 	parse_quote
 };
 use syn::token::Paren;
-use syn::parse::{Result, Error};
-use syn_derive::{Parse, ToTokens};
+use syn::parse::{Parse, ParseStream, Result, Error};
 use quote::{ToTokens, format_ident, quote};
 
 use macrospace::enum_utils::get_variant_types;
@@ -111,23 +111,78 @@ fn def_marker_trait_inner
 	tokens
 }
 
-#[derive (Parse, ToTokens)]
 struct DefMarkerTrait
 {
 	for_token: Token! [for],
 	generics: Generics,
 
-	#[syn (parenthesized)]
 	paren_token: Paren,
-	#[syn (in = paren_token)]
 	lhs_type: Path,
-	#[syn (in = paren_token)]
 	comma_token: Token! [,],
-	#[syn (in = paren_token)]
 	rhs_type: Path,
 
 	in_token: Token! [in],
 	algebra_type: Path
+}
+
+impl Parse for DefMarkerTrait
+{
+	fn parse (input: ParseStream <'_>) -> Result <Self>
+	{
+		let for_token = input . parse ()?;
+		let mut generics: Generics = input . parse ()?;
+
+		let content;
+		let paren_token = parenthesized! (content in input);
+
+		let lhs_type = content . parse ()?;
+		let comma_token = content . parse ()?;
+		let rhs_type = content . parse ()?;
+
+		let in_token = input . parse ()?;
+		let algebra_type = input . parse ()?;
+
+		generics . where_clause = input . parse ()?;
+
+		let output = Self
+		{
+			for_token,
+			generics,
+			paren_token,
+			lhs_type,
+			comma_token,
+			rhs_type,
+			in_token,
+			algebra_type
+		};
+
+		Ok (output)
+	}
+}
+
+impl ToTokens for DefMarkerTrait
+{
+	fn to_tokens (&self, tokens: &mut proc_macro2::TokenStream)
+	{
+		self . for_token . to_tokens (tokens);
+		self . generics . to_tokens (tokens);
+
+		self . paren_token . surround
+		(
+			tokens,
+			|inner_tokens|
+			{
+				self . lhs_type . to_tokens (inner_tokens);
+				self . comma_token . to_tokens (inner_tokens);
+				self . rhs_type . to_tokens (inner_tokens);
+			}
+		);
+
+		self . in_token . to_tokens (tokens);
+		self . algebra_type . to_tokens (tokens);
+
+		self . generics . where_clause . to_tokens (tokens);
+	}
 }
 
 fn try_def_marker_trait_inner_impl

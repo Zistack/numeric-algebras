@@ -1,8 +1,7 @@
 use macrospace_autotransform::AutotransformPath;
-use syn::{Generics, Path, Type, Token, parse};
-use syn::parse::{Result, Error};
-use syn_derive::{Parse, ToTokens};
-use quote::quote;
+use syn::{Generics, Path, Type, Token, parenthesized, parse};
+use syn::parse::{Parse, ParseStream, Result, Error};
+use quote::{ToTokens, quote};
 
 mod kw
 {
@@ -19,55 +18,67 @@ fn def_scalar_arithmetic_inner
 )
 -> proc_macro2::TokenStream
 {
+	let where_clause = &generics . where_clause;
+
 	quote!
 	{
 		numeric_algebras::derive::def_scalar_mul_traits!
 		(
 			for #generics (#aggregate_type, #scalar_type) -> #aggregate_type
 			in #algebra_type
+			#where_clause
 		);
 		numeric_algebras::derive::def_scalar_div_traits!
 		(
 			for #generics (#aggregate_type, #scalar_type) -> #aggregate_type
 			in #algebra_type
+			#where_clause
 		);
 		numeric_algebras::derive::def_scalar_pow_traits!
 		(
 			for #generics (#aggregate_type, #scalar_type) -> #aggregate_type
 			in #algebra_type
+			#where_clause
 		);
 		numeric_algebras::derive::def_scalar_log_traits!
 		(
 			for #generics (#aggregate_type, #scalar_type) -> #aggregate_type
 			in #algebra_type
+			#where_clause
 		);
 
 		numeric_algebras::derive::def_scalar_mul_assign_traits!
 		(
 			for #generics (#aggregate_type, #scalar_type) in #algebra_type
+			#where_clause
 		);
 		numeric_algebras::derive::def_scalar_div_assign_traits!
 		(
 			for #generics (#aggregate_type, #scalar_type) in #algebra_type
+			#where_clause
 		);
 		numeric_algebras::derive::def_scalar_pow_assign_traits!
 		(
 			for #generics (#aggregate_type, #scalar_type) in #algebra_type
+			#where_clause
 		);
 		numeric_algebras::derive::def_scalar_log_assign_traits!
 		(
 			for #generics (#aggregate_type, #scalar_type) in #algebra_type
+			#where_clause
 		);
 
 		numeric_algebras::derive::def_scalar_multiplication_is_commutative_trait!
 		(
 			for #generics (#aggregate_type, #scalar_type) in #algebra_type
+			#where_clause
 		);
 
 		macrospace_autotransform::delegate!
 		{
 			impl #generics #algebra_type
 			with [#algebra_type_autotransform] -> []
+			#where_clause
 			{
 				trait numeric_algebras::traits::Neg <#scalar_type>;
 				trait <'a> numeric_algebras::traits::Neg <&'a #scalar_type>;
@@ -169,28 +180,90 @@ fn def_scalar_arithmetic_inner
 	}
 }
 
-#[derive (Clone, Debug, Parse, ToTokens)]
+#[derive (Clone, Debug)]
 struct DefScalarArithmeticInput
 {
 	for_token: Token! [for],
 	generics: Generics,
 
-	#[syn (parenthesized)]
 	paren_token: syn::token::Paren,
-	#[syn (in = paren_token)]
 	aggregate_type: Path,
-	#[syn (in = paren_token)]
 	comma_token: Token! [,],
-	#[syn (in = paren_token)]
 	scalar_type: Type,
 
 	in_token: Token! [in],
-
 	algebra_type: Path,
 
 	with_token: kw::with,
-
 	algebra_type_autotransform: AutotransformPath
+}
+
+impl Parse for DefScalarArithmeticInput
+{
+	fn parse (input: ParseStream <'_>) -> Result <Self>
+	{
+		let for_token = input . parse ()?;
+		let mut generics: Generics = input . parse ()?;
+
+		let content;
+		let paren_token = parenthesized! (content in input);
+
+		let aggregate_type = content . parse ()?;
+		let comma_token = content . parse ()?;
+		let scalar_type = content . parse ()?;
+
+		let in_token = input . parse ()?;
+		let algebra_type = input . parse ()?;
+
+		let with_token = input . parse ()?;
+		let algebra_type_autotransform = input . parse ()?;
+
+		generics . where_clause = input . parse ()?;
+
+		let output = Self
+		{
+			for_token,
+			generics,
+			paren_token,
+			aggregate_type,
+			comma_token,
+			scalar_type,
+			in_token,
+			algebra_type,
+			with_token,
+			algebra_type_autotransform
+		};
+
+		Ok (output)
+	}
+}
+
+impl ToTokens for DefScalarArithmeticInput
+{
+	fn to_tokens (&self, tokens: &mut proc_macro2::TokenStream)
+	{
+		self . for_token . to_tokens (tokens);
+		self . generics . to_tokens (tokens);
+
+		self . paren_token . surround
+		(
+			tokens,
+			|inner_tokens|
+			{
+				self . aggregate_type . to_tokens (inner_tokens);
+				self . comma_token . to_tokens (inner_tokens);
+				self . scalar_type . to_tokens (inner_tokens);
+			}
+		);
+
+		self . in_token . to_tokens (tokens);
+		self . algebra_type . to_tokens (tokens);
+
+		self . with_token . to_tokens (tokens);
+		self . algebra_type_autotransform . to_tokens (tokens);
+
+		self . generics . where_clause . to_tokens (tokens);
+	}
 }
 
 fn try_def_scalar_arithmetic_impl (input: proc_macro::TokenStream)

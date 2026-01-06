@@ -12,8 +12,7 @@ use syn::{
 	parse,
 	parse_quote
 };
-use syn::parse::{Result, Error};
-use syn_derive::{Parse, ToTokens};
+use syn::parse::{Parse, ParseStream, Result, Error};
 use quote::{ToTokens, quote, format_ident};
 
 use macrospace::generics::combine_generics;
@@ -189,7 +188,6 @@ fn def_sin_cos_traits_inner
 	tokens
 }
 
-#[derive (Parse, ToTokens)]
 struct DefSinCosTraits
 {
 	for_token: Token! [for],
@@ -199,6 +197,55 @@ struct DefSinCosTraits
 	output_type: Path,
 	in_token: Token! [in],
 	algebra_type: Path,
+}
+
+impl Parse for DefSinCosTraits
+{
+	fn parse (input: ParseStream <'_>) -> Result <Self>
+	{
+		let for_token = input . parse ()?;
+		let mut generics: Generics = input . parse ()?;
+		let input_type = input . parse ()?;
+
+		let arrow_token = input . parse ()?;
+		let output_type = input . parse ()?;
+
+		let in_token = input . parse ()?;
+		let algebra_type = input . parse ()?;
+
+		generics . where_clause = input . parse ()?;
+
+		let output = Self
+		{
+			for_token,
+			generics,
+			input_type,
+			arrow_token,
+			output_type,
+			in_token,
+			algebra_type
+		};
+
+		Ok (output)
+	}
+}
+
+impl ToTokens for DefSinCosTraits
+{
+	fn to_tokens (&self, tokens: &mut proc_macro2::TokenStream)
+	{
+		self . for_token . to_tokens (tokens);
+		self . generics . to_tokens (tokens);
+		self . input_type . to_tokens (tokens);
+
+		self . arrow_token . to_tokens (tokens);
+		self . output_type . to_tokens (tokens);
+
+		self . in_token . to_tokens (tokens);
+		self . algebra_type . to_tokens (tokens);
+
+		self . generics . where_clause . to_tokens (tokens);
+	}
 }
 
 fn try_def_sin_cos_traits_inner_impl (input: proc_macro::TokenStream)

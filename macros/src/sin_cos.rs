@@ -196,7 +196,9 @@ struct DefSinCosTraits
 	arrow_token: Token! [->],
 	output_type: Path,
 	in_token: Token! [in],
-	algebra_type: Path,
+	algebra_type: Path
+
+	// where clause
 }
 
 impl Parse for DefSinCosTraits

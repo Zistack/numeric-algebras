@@ -123,6 +123,8 @@ struct DefMarkerTrait
 
 	in_token: Token! [in],
 	algebra_type: Path
+
+	// where clause
 }
 
 impl Parse for DefMarkerTrait

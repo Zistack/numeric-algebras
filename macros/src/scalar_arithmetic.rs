@@ -196,6 +196,8 @@ struct DefScalarArithmeticInput
 
 	with_token: kw::with,
 	algebra_type_autotransform: AutotransformPath
+
+	// where clause
 }
 
 impl Parse for DefScalarArithmeticInput

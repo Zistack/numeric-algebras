@@ -187,6 +187,8 @@ struct DefArithmeticInput
 	algebra_type: Path,
 	algebra_comma_token: Token! [,],
 	accumulator_algebra_type: Path
+
+	// where clause
 }
 
 impl Parse for DefArithmeticInput

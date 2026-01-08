@@ -1,3 +1,5 @@
+use std::iter::zip;
+
 use syn::{
 	Ident,
 	Path,
@@ -74,26 +76,34 @@ fn def_unary_traits_inner
 			}
 		}
 
-		let (impl_generics, _, where_clause) = generics . split_for_impl ();
+		let mut output_values = Vec::new ();
+
+		for (input_member, algebra_conversion_expression)
+		in zip (&input_members, &algebra_conversion_expressions)
+		{
+			output_values . push
+			(
+				quote!
+				(
+					#algebra_conversion_expression (self . clone ())
+						. #snake_op (x . #input_member)
+				)
+			);
+		}
+		for _
+		in algebra_conversion_expressions . len () .. output_members . len ()
+		{
+			output_values . push (quote! (std::default::Default::default ()));
+		}
 
 		let constructor = constructor
 		(
 			&parse_quote! (Self::Output),
 			&output_members,
-			&input_members
-				. iter ()
-				. zip (algebra_conversion_expressions . iter ())
-				. map
-				(
-					|(member, algebra_conversion_expression)|
-					parse_quote!
-					(
-						#algebra_conversion_expression (self . clone ())
-							. #snake_op (x . #member)
-					)
-				)
-				. collect::<Vec <Expr>> ()
+			&output_values
 		);
+
+		let (impl_generics, _, where_clause) = generics . split_for_impl ();
 
 		quote!
 		{
@@ -140,26 +150,34 @@ fn def_unary_traits_inner
 			}
 		}
 
-		let (impl_generics, _, where_clause) = generics . split_for_impl ();
+		let mut output_values = Vec::new ();
+
+		for (input_member, algebra_conversion_expression)
+		in zip (&input_members, &algebra_conversion_expressions)
+		{
+			output_values . push
+			(
+				quote!
+				(
+					#algebra_conversion_expression (self . clone ())
+						. #snake_op (&x . #input_member)
+				)
+			);
+		}
+		for _
+		in algebra_conversion_expressions . len () .. output_members . len ()
+		{
+			output_values . push (quote! (std::default::Default::default ()));
+		}
 
 		let constructor = constructor
 		(
 			&parse_quote! (Self::Output),
 			&output_members,
-			&input_members
-				. iter ()
-				. zip (algebra_conversion_expressions . iter ())
-				. map
-				(
-					|(member, algebra_conversion_expression)|
-					parse_quote!
-					(
-						#algebra_conversion_expression (self . clone ())
-							. #snake_op (&x . #member)
-					)
-				)
-				. collect::<Vec <Expr>> ()
+			&output_values
 		);
+
+		let (impl_generics, _, where_clause) = generics . split_for_impl ();
 
 		quote!
 		{

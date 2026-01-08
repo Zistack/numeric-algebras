@@ -88,8 +88,6 @@ fn def_scalar_assign_traits_inner
 			}
 		}
 
-		let (impl_generics, _, where_clause) = generics . split_for_impl ();
-
 		let op_assign_exprs = &input_members
 			. iter ()
 			. zip (algebra_conversion_expressions . iter ())
@@ -103,6 +101,8 @@ fn def_scalar_assign_traits_inner
 				)
 			)
 			. collect::<Vec <Expr>> ();
+
+		let (impl_generics, _, where_clause) = generics . split_for_impl ();
 
 		quote!
 		{
@@ -158,8 +158,6 @@ fn def_scalar_assign_traits_inner
 			}
 		}
 
-		let (impl_generics, _, where_clause) = generics . split_for_impl ();
-
 		let op_assign_exprs = &input_members
 			. iter ()
 			. zip (algebra_conversion_expressions . iter ())
@@ -173,6 +171,8 @@ fn def_scalar_assign_traits_inner
 				)
 			)
 			. collect::<Vec <Expr>> ();
+
+		let (impl_generics, _, where_clause) = generics . split_for_impl ();
 
 		quote!
 		{

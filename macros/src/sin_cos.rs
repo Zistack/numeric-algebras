@@ -1,3 +1,5 @@
+use std::iter::zip;
+
 use syn::{
 	Ident,
 	Path,
@@ -79,7 +81,39 @@ fn def_sin_cos_traits_inner
 			}
 		}
 
-		let (impl_generics, _, where_clause) = generics . split_for_impl ();
+		let mut assignment_exprs = Vec::new ();
+
+		for (((sin_var, cos_var), algebra_conversion_expression), input_member)
+		in zip (&sin_vars, &cos_vars)
+			. zip (&algebra_conversion_expressions)
+			. zip (&input_members)
+		{
+			assignment_exprs . push
+			(
+				quote!
+				(
+					let (#sin_var, #cos_var) =
+						#algebra_conversion_expression (self . clone ())
+							. sin_cos (x . #input_member);
+				)
+			);
+		}
+		for (sin_var, cos_var)
+		in zip (&sin_vars, &cos_vars)
+			. skip (algebra_conversion_expressions . len ())
+		{
+			assignment_exprs . push
+			(
+				quote!
+				(
+					let (#sin_var, #cos_var) =
+					(
+						std::default::Default::default (),
+						std::default::Default::default ()
+					);
+				)
+			);
+		}
 
 		let sin_constructor = constructor
 		(
@@ -95,6 +129,8 @@ fn def_sin_cos_traits_inner
 			&cos_vars
 		);
 
+		let (impl_generics, _, where_clause) = generics . split_for_impl ();
+
 		quote!
 		{
 			#[automatically_derived]
@@ -107,10 +143,7 @@ fn def_sin_cos_traits_inner
 				fn sin_cos (self, x: #input_type)
 				-> (Self::Output, Self::Output)
 				{
-					#(let (#sin_vars, #cos_vars) =
-						#algebra_conversion_expressions (self . clone ())
-							. sin_cos (x . #input_members);)*
-
+					#(#assignment_exprs)*
 
 					(#sin_constructor, #cos_constructor)
 				}
@@ -144,7 +177,39 @@ fn def_sin_cos_traits_inner
 			}
 		}
 
-		let (impl_generics, _, where_clause) = generics . split_for_impl ();
+		let mut assignment_exprs = Vec::new ();
+
+		for (((sin_var, cos_var), algebra_conversion_expression), input_member)
+		in zip (&sin_vars, &cos_vars)
+			. zip (&algebra_conversion_expressions)
+			. zip (&input_members)
+		{
+			assignment_exprs . push
+			(
+				quote!
+				(
+					let (#sin_var, #cos_var) =
+						#algebra_conversion_expression (self . clone ())
+							. sin_cos (&x . #input_member);
+				)
+			);
+		}
+		for (sin_var, cos_var)
+		in zip (&sin_vars, &cos_vars)
+			. skip (algebra_conversion_expressions . len ())
+		{
+			assignment_exprs . push
+			(
+				quote!
+				(
+					let (#sin_var, #cos_var) =
+					(
+						std::default::Default::default (),
+						std::default::Default::default ()
+					);
+				)
+			);
+		}
 
 		let sin_constructor = constructor
 		(
@@ -160,6 +225,8 @@ fn def_sin_cos_traits_inner
 			&cos_vars
 		);
 
+		let (impl_generics, _, where_clause) = generics . split_for_impl ();
+
 		quote!
 		{
 			#[automatically_derived]
@@ -173,10 +240,7 @@ fn def_sin_cos_traits_inner
 				fn sin_cos (self, x: &#lifetime_a #input_type)
 				-> (Self::Output, Self::Output)
 				{
-					#(let (#sin_vars, #cos_vars) =
-						#algebra_conversion_expressions (self . clone ())
-							. sin_cos (&x . #input_members);)*
-
+					#(#assignment_exprs)*
 
 					(#sin_constructor, #cos_constructor)
 				}

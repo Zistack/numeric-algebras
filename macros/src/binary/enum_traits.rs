@@ -80,14 +80,14 @@ pub fn def_enum_binary_traits_inner
 			}
 		}
 
-		let (impl_generics, _, where_clause) = generics . split_for_impl ();
-
 		let constructor = constructor
 		(
 			&parse_quote! (Self::Output),
 			&output_members,
 			&input_struct_members
 		);
+
+		let (impl_generics, _, where_clause) = generics . split_for_impl ();
 
 		quote!
 		{
@@ -161,14 +161,14 @@ pub fn def_enum_binary_traits_inner
 			}
 		}
 
-		let (impl_generics, _, where_clause) = generics . split_for_impl ();
-
 		let constructor = constructor
 		(
 			&parse_quote! (Self::Output),
 			&output_members,
 			&input_struct_members
 		);
+
+		let (impl_generics, _, where_clause) = generics . split_for_impl ();
 
 		quote!
 		{
@@ -243,14 +243,14 @@ pub fn def_enum_binary_traits_inner
 			}
 		}
 
-		let (impl_generics, _, where_clause) = generics . split_for_impl ();
-
 		let constructor = constructor
 		(
 			&parse_quote! (Self::Output),
 			&output_members,
 			&input_struct_members
 		);
+
+		let (impl_generics, _, where_clause) = generics . split_for_impl ();
 
 		quote!
 		{
@@ -326,14 +326,14 @@ pub fn def_enum_binary_traits_inner
 			}
 		}
 
-		let (impl_generics, _, where_clause) = generics . split_for_impl ();
-
 		let constructor = constructor
 		(
 			&parse_quote! (Self::Output),
 			&output_members,
 			&input_struct_members
 		);
+
+		let (impl_generics, _, where_clause) = generics . split_for_impl ();
 
 		quote!
 		{
@@ -410,14 +410,14 @@ pub fn def_enum_binary_traits_inner
 			}
 		}
 
-		let (impl_generics, _, where_clause) = generics . split_for_impl ();
-
 		let constructor = constructor
 		(
 			&parse_quote! (Self::Output),
 			&output_members,
 			&input_struct_members
 		);
+
+		let (impl_generics, _, where_clause) = generics . split_for_impl ();
 
 		quote!
 		{
@@ -491,14 +491,14 @@ pub fn def_enum_binary_traits_inner
 			}
 		}
 
-		let (impl_generics, _, where_clause) = generics . split_for_impl ();
-
 		let constructor = constructor
 		(
 			&parse_quote! (Self::Output),
 			&output_members,
 			&input_struct_members
 		);
+
+		let (impl_generics, _, where_clause) = generics . split_for_impl ();
 
 		quote!
 		{
@@ -572,14 +572,14 @@ pub fn def_enum_binary_traits_inner
 			}
 		}
 
-		let (impl_generics, _, where_clause) = generics . split_for_impl ();
-
 		let constructor = constructor
 		(
 			&parse_quote! (Self::Output),
 			&output_members,
 			&input_struct_members
 		);
+
+		let (impl_generics, _, where_clause) = generics . split_for_impl ();
 
 		quote!
 		{
@@ -656,14 +656,14 @@ pub fn def_enum_binary_traits_inner
 			}
 		}
 
-		let (impl_generics, _, where_clause) = generics . split_for_impl ();
-
 		let constructor = constructor
 		(
 			&parse_quote! (Self::Output),
 			&output_members,
 			&input_struct_members
 		);
+
+		let (impl_generics, _, where_clause) = generics . split_for_impl ();
 
 		quote!
 		{

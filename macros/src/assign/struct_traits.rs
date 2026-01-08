@@ -69,8 +69,6 @@ pub fn def_struct_assign_traits_inner
 			}
 		}
 
-		let (impl_generics, _, where_clause) = generics . split_for_impl ();
-
 		let op_assign_exprs = &lhs_members
 			. iter ()
 			. zip (&rhs_members)
@@ -89,6 +87,8 @@ pub fn def_struct_assign_traits_inner
 				)
 			)
 			. collect::<Vec <Expr>> ();
+
+		let (impl_generics, _, where_clause) = generics . split_for_impl ();
 
 		quote!
 		{
@@ -145,8 +145,6 @@ pub fn def_struct_assign_traits_inner
 			}
 		}
 
-		let (impl_generics, _, where_clause) = generics . split_for_impl ();
-
 		let op_assign_exprs = &lhs_members
 			. iter ()
 			. zip (&rhs_members)
@@ -165,6 +163,8 @@ pub fn def_struct_assign_traits_inner
 				)
 			)
 			. collect::<Vec <Expr>> ();
+
+		let (impl_generics, _, where_clause) = generics . split_for_impl ();
 
 		quote!
 		{

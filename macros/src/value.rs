@@ -59,24 +59,29 @@ where C: Default + ToTokens
 		}
 	}
 
-	let (impl_generics, _, where_clause) = generics . split_for_impl ();
+	let mut values = Vec::new ();
+
+	for algebra_conversion_expression in &algebra_conversion_expressions
+	{
+		values . push
+		(
+			quote!
+			(
+				#algebra_conversion_expression (self . clone ())
+					. #snake_value ()
+			)
+		);
+	}
+	for _ in algebra_conversion_expressions . len () .. members . len ()
+	{
+		values . push (quote! (std::default::Default::default ()));
+	}
 
 	let constructor = constructor
 	(
 		&struct_type,
 		&members,
-		&algebra_conversion_expressions
-			. iter ()
-			. map
-			(
-				|algebra_conversion_expression|
-				parse_quote!
-				(
-					#algebra_conversion_expression (self . clone ())
-						. #snake_value ()
-				)
-			)
-			. collect::<Vec <Expr>> ()
+		&values
 	);
 
 	let is_value_expr: Punctuated <Expr, C> = members
@@ -91,6 +96,8 @@ where C: Default + ToTokens
 			)
 		)
 		. collect ();
+
+	let (impl_generics, _, where_clause) = generics . split_for_impl ();
 
 	quote!
 	{

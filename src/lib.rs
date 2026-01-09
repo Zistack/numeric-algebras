@@ -27,7 +27,4 @@ macro_rules! a
 	}
 }
 
-pub use numeric_algebras_core::{
-	algebra_mapping,
-	check_num_parts
-};
+pub use numeric_algebras_core::algebra_mapping;

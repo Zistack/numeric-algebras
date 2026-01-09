@@ -30,7 +30,6 @@ use macrospace::substitute::{
 	substitute_arguments_for_derive_input
 };
 
-use numeric_algebras_core::check_num_parts;
 use numeric_algebras_core::algebra_mapping::AlgebraMapping;
 
 struct DefAssignTraits
@@ -159,34 +158,8 @@ fn try_def_assign_traits_inner_impl
 
 	let rhs_part_types = match &substituted_rhs_item . data
 	{
-		Data::Struct (struct_data) =>
-		{
-			check_num_parts
-			(
-				substituted_lhs_item . fields . len (),
-				struct_data . fields . len (),
-				&lhs_type,
-				&rhs_type,
-				"LHS",
-				"RHS"
-			)?;
-
-			get_member_types (&struct_data . fields)
-		},
-		Data::Enum (enum_data) =>
-		{
-			check_num_parts
-			(
-				substituted_lhs_item . fields . len (),
-				enum_data . variants . len (),
-				&lhs_type,
-				&rhs_type,
-				"LHS",
-				"RHS"
-			)?;
-
-			get_variant_types (&enum_data . variants)?
-		},
+		Data::Struct (struct_data) => get_member_types (&struct_data . fields),
+		Data::Enum (enum_data) => get_variant_types (&enum_data . variants)?,
 		_ => unreachable! ()
 	};
 

@@ -30,7 +30,6 @@ use macrospace::substitute::{
 	substitute_arguments_for_derive_input
 };
 
-use numeric_algebras_core::check_num_parts;
 use numeric_algebras_core::algebra_mapping::AlgebraMapping;
 
 struct DefBinaryTraits
@@ -172,34 +171,8 @@ fn try_def_binary_traits_inner_impl
 
 	let rhs_part_types = match &substituted_rhs_item . data
 	{
-		Data::Struct (struct_data) =>
-		{
-			check_num_parts
-			(
-				substituted_lhs_item . fields . len (),
-				struct_data . fields . len (),
-				&lhs_type,
-				&rhs_type,
-				"LHS",
-				"RHS"
-			)?;
-
-			get_member_types (&struct_data . fields)
-		},
-		Data::Enum (enum_data) =>
-		{
-			check_num_parts
-			(
-				substituted_lhs_item . fields . len (),
-				enum_data . variants . len (),
-				&lhs_type,
-				&rhs_type,
-				"LHS",
-				"RHS"
-			)?;
-
-			get_variant_types (&enum_data . variants)?
-		}
+		Data::Struct (struct_data) => get_member_types (&struct_data . fields),
+		Data::Enum (enum_data) => get_variant_types (&enum_data . variants)?,
 		_ => unreachable! ()
 	};
 
@@ -211,16 +184,6 @@ fn try_def_binary_traits_inner_impl
 
 	let (output_members, output_member_types) =
 		get_members_and_types_split (&substituted_output_item . fields);
-
-	check_num_parts
-	(
-		substituted_lhs_item . fields . len (),
-		substituted_output_item . fields . len (),
-		&lhs_type,
-		&output_type,
-		"Input",
-		"output"
-	)?;
 
 	let algebra_mapping = AlgebraMapping::get_from_attributes
 	(

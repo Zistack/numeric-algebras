@@ -25,7 +25,6 @@ use macrospace::substitute::{
 	substitute_arguments_for_derive_input
 };
 
-use numeric_algebras_core::check_num_parts;
 use numeric_algebras_core::algebra_mapping::AlgebraMapping;
 
 fn def_sin_cos_traits_inner
@@ -331,16 +330,6 @@ fn try_def_sin_cos_traits_inner_impl (input: proc_macro::TokenStream)
 	):
 		((DeriveInput, ItemStruct, ItemStruct), DefSinCosTraits)
 		= macrospace::parse_args! (3, input)?;
-
-	check_num_parts
-	(
-		input_item . fields . len (),
-		output_item . fields . len (),
-		&input_type,
-		&output_type,
-		"Input",
-		"output"
-	)?;
 
 	let (mut algebra_substitutions, substituted_algebra_item) =
 		substitute_arguments_for_derive_input (algebra_item . clone (), &algebra_type)?;

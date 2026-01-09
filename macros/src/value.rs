@@ -44,6 +44,11 @@ where C: Default + ToTokens
 	let pascal_value_trait: Path =
 		parse_quote! (numeric_algebras::traits::#pascal_value);
 
+	generics
+		. make_where_clause ()
+		. predicates
+		. push (parse_quote! (Self: Clone));
+
 	{
 		let where_clause = generics . make_where_clause ();
 

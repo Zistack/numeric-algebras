@@ -47,7 +47,7 @@ where C: Default + ToTokens
 	generics
 		. make_where_clause ()
 		. predicates
-		. push (parse_quote! (Self: Clone));
+		. push (parse_quote! (Self: std::clone::Clone));
 
 	{
 		let where_clause = generics . make_where_clause ();

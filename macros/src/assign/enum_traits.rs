@@ -37,7 +37,7 @@ pub fn def_enum_assign_traits_inner
 	generics
 		. make_where_clause ()
 		. predicates
-		. push (parse_quote! (Self: Clone));
+		. push (parse_quote! (Self: std::clone::Clone));
 
 	let x = Ident::new ("x", proc_macro2::Span::mixed_site ());
 

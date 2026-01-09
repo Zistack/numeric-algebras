@@ -35,7 +35,7 @@ pub fn def_struct_assign_traits_inner
 	generics
 		. make_where_clause ()
 		. predicates
-		. push (parse_quote! (Self: Clone));
+		. push (parse_quote! (Self: std::clone::Clone));
 
 	let mut tokens = proc_macro2::TokenStream::new ();
 

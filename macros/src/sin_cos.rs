@@ -45,7 +45,7 @@ fn def_sin_cos_traits_inner
 	generics
 		. make_where_clause ()
 		. predicates
-		. push (parse_quote! (Self: Clone));
+		. push (parse_quote! (Self: std::clone::Clone));
 
 	let sin_vars: Vec <Ident> = (0..(input_members . len ()))
 		. map (|i| format_ident! ("sin{}", i))

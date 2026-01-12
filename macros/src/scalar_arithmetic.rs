@@ -169,12 +169,9 @@ fn def_scalar_arithmetic_inner
 				trait numeric_algebras::traits::NaN <#scalar_type>;
 
 				trait numeric_algebras::traits::Accumulatable <#scalar_type>;
-				trait numeric_algebras::traits::Convert
-				<
-					<#algebra_type as numeric_algebras::traits::Accumulatable <#scalar_type>>::Accumulator,
-					#scalar_type
-				>
-				where #algebra_type: numeric_algebras::traits::Accumulatable <#scalar_type>;
+
+				trait <X> numeric_algebras::traits::Convert <X, #scalar_type>;
+				trait <X> numeric_algebras::traits::ApproxConvert <X, #scalar_type>;
 			}
 		}
 	}

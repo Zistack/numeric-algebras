@@ -12,9 +12,11 @@ numeric-algebras-macros = {path = "macros"}
 
 abstract-algebras = {path = "../abstract-algebras"}
 macrospace = {path = "../macrospace"}
+macrospace-autotransform = {path = "../macrospace-autotransform"}
 
 paste = {version = "1.0"}
 
+ordered-float = {version = "5.1"}
 proptest = {version = "1.4", optional = true}
 
 [dev-dependencies]

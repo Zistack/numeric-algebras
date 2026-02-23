@@ -349,18 +349,23 @@ pub type ElementwiseAccumulator <A, T, const N: usize> =
 	[<A as Accumulatable <T>>::Accumulator; N];
 
 pub struct ElementwiseAccumulatorAlgebra <A, T>
+where A: Accumulatable <T>
 {
-	a: A,
+	a: <A as Accumulatable <T>>::AccumulatorAlgebra,
 	_t: PhantomData <T>
 }
 
 impl <A, T> Copy for ElementwiseAccumulatorAlgebra <A, T>
-where A: Copy
+where
+	A: Accumulatable <T>,
+	A::AccumulatorAlgebra: Copy
 {
 }
 
 impl <A, T> Clone for ElementwiseAccumulatorAlgebra <A, T>
-where A: Clone
+where
+	A: Accumulatable <T>,
+	A::AccumulatorAlgebra: Clone
 {
 	fn clone (&self) -> Self
 	{
@@ -369,8 +374,9 @@ where A: Clone
 }
 
 impl <A, T> ElementwiseAccumulatorAlgebra <A, T>
+where A: Accumulatable <T>
 {
-	fn new (a: A) -> Self
+	fn new (a: A::AccumulatorAlgebra) -> Self
 	{
 		Self {a, _t: PhantomData::default ()}
 	}
@@ -387,7 +393,7 @@ where
 
 	fn accumulator (self) -> Self::AccumulatorAlgebra
 	{
-		Self::AccumulatorAlgebra::new (self . a)
+		Self::AccumulatorAlgebra::new (self . a . accumulator ())
 	}
 }
 
@@ -399,18 +405,14 @@ where
 {
 	fn zero (self) -> ElementwiseAccumulator <A, T, N>
 	{
-		let accumulator_a = self . a . accumulator ();
-
-		std::array::from_fn (|_| accumulator_a . clone () . zero ())
+		std::array::from_fn (|_| self . a . clone () . zero ())
 	}
 
 	fn is_zero (self, x: &ElementwiseAccumulator <A, T, N>) -> bool
 	{
-		let accumulator_a = self . a . accumulator ();
-
 		for x_i in x
 		{
-			if ! accumulator_a . clone () . is_zero (x_i) { return false; }
+			if ! self . a . clone () . is_zero (x_i) { return false; }
 		}
 
 		true
@@ -431,11 +433,9 @@ where
 		rhs: [T; N]
 	)
 	{
-		let accumulator_a = self . a . accumulator ();
-
 		for (lhs_i, rhs_i) in std::iter::zip (lhs, rhs)
 		{
-			accumulator_a . clone () . add_assign (lhs_i, rhs_i);
+			self . a . clone () . add_assign (lhs_i, rhs_i);
 		}
 	}
 }
@@ -454,11 +454,9 @@ where
 		rhs: &'a [T; N]
 	)
 	{
-		let accumulator_a = self . a . accumulator ();
-
 		for (lhs_i, rhs_i) in std::iter::zip (lhs, rhs)
 		{
-			accumulator_a . clone () . add_assign (lhs_i, rhs_i);
+			self . a . clone () . add_assign (lhs_i, rhs_i);
 		}
 	}
 }

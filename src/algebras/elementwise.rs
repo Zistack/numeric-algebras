@@ -1,0 +1,638 @@
+use std::marker::PhantomData;
+use std::mem::{ManuallyDrop, MaybeUninit};
+
+use crate::traits::*;
+
+struct PartialInitArray <T, const N: usize>
+{
+	num_init: usize,
+	array: ManuallyDrop <[MaybeUninit <T>; N]>
+}
+
+impl <T, const N: usize> PartialInitArray <T, N>
+{
+	fn new () -> Self
+	{
+		Self
+		{
+			num_init: 0,
+			array: ManuallyDrop::new ([const { MaybeUninit::uninit () }; N])
+		}
+	}
+
+	unsafe fn push_unchecked (&mut self, e: T)
+	{
+		self . array . get_unchecked_mut (self . num_init) . write (e);
+		self . num_init = self . num_init . unchecked_add (1);
+	}
+
+	unsafe fn into_init_array (mut self) -> [T; N]
+	{
+		MaybeUninit::array_assume_init (ManuallyDrop::take (&mut self . array))
+	}
+}
+
+impl <T, const N: usize> Drop for PartialInitArray <T, N>
+{
+	fn drop (&mut self)
+	{
+		unsafe
+		{
+			self
+				. array
+				. get_unchecked_mut (.. self . num_init)
+				. assume_init_drop ();
+
+			ManuallyDrop::drop (&mut self . array);
+		}
+	}
+}
+
+pub struct ElementwiseAlgebra <A, T>
+{
+	a: A,
+	_t: PhantomData <T>
+}
+
+impl <A, T> ElementwiseAlgebra <A, T>
+{
+	pub fn new (a: A) -> Self
+	{
+		Self {a,  _t: PhantomData::default ()}
+	}
+}
+
+macro_rules! impl_unary
+{
+	($Trait: ident, $method: ident) =>
+	{
+		impl <A, T, const N: usize> $Trait <[T; N]>
+		for ElementwiseAlgebra <A, T>
+		where A: Clone + $Trait <T, Output = T>
+		{
+			type Output = [T; N];
+
+			fn $method (self, x: [T; N]) -> Self::Output
+			{
+				x . map (|e| self . a . clone () . $method (e))
+			}
+		}
+
+		impl <'a, A, T, const N: usize> $Trait <&'a [T; N]>
+		for ElementwiseAlgebra <A, T>
+		where A: Clone + $Trait <&'a T, Output = T>
+		{
+			type Output = [T; N];
+
+			fn $method (self, x: &'a [T; N]) -> Self::Output
+			{
+				x . each_ref () . map (|e| self . a . clone () . $method (e))
+			}
+		}
+	}
+}
+
+impl_unary! (Neg, neg);
+
+impl_unary! (Abs, abs);
+impl_unary! (Recip, recip);
+impl_unary! (Sqrt, sqrt);
+
+impl_unary! (Ln, ln);
+impl_unary! (Exp, exp);
+
+impl_unary! (Sin, sin);
+impl_unary! (Cos, cos);
+impl_unary! (Tan, tan);
+
+impl <A, T, const N: usize> SinCos <[T; N]> for ElementwiseAlgebra <A, T>
+where A: Clone + SinCos <T, Output = T>
+{
+	type Output = [T; N];
+
+	fn sin_cos (self, x: [T; N]) -> (Self::Output, Self::Output)
+	{
+		let mut sins = PartialInitArray::new ();
+		let mut coss = PartialInitArray::new ();
+
+		for x_i in x
+		{
+			let (sin, cos) = self . a . clone () . sin_cos (x_i);
+
+			unsafe
+			{
+				sins . push_unchecked (sin);
+				coss . push_unchecked (cos);
+			}
+		}
+
+		let sins = unsafe { sins . into_init_array () };
+		let coss = unsafe { coss . into_init_array () };
+
+		(sins, coss)
+	}
+}
+
+impl <'a, A, T, const N: usize> SinCos <&'a [T; N]>
+for ElementwiseAlgebra <A, T>
+where A: Clone + SinCos <&'a T, Output = T>
+{
+	type Output = [T; N];
+
+	fn sin_cos (self, x: &'a [T; N]) -> (Self::Output, Self::Output)
+	{
+		let mut sins = PartialInitArray::new ();
+		let mut coss = PartialInitArray::new ();
+
+		for x_i in x
+		{
+			let (sin, cos) = self . a . clone () . sin_cos (x_i);
+
+			unsafe
+			{
+				sins . push_unchecked (sin);
+				coss . push_unchecked (cos);
+			}
+		}
+
+		let sins = unsafe { sins . into_init_array () };
+		let coss = unsafe { coss . into_init_array () };
+
+		(sins, coss)
+	}
+}
+
+macro_rules! impl_bin
+{
+	($Trait: ident, $method: ident) =>
+	{
+		impl <A, T, const N: usize> $Trait <[T; N], [T; N]>
+		for ElementwiseAlgebra <A, T>
+		where A: Clone + $Trait <T, T, Output = T>
+		{
+			type Output = [T; N];
+
+			fn $method (self, lhs: [T; N], rhs: [T; N]) -> Self::Output
+			{
+				let mut output = PartialInitArray::new ();
+
+				for (lhs_i, rhs_i) in std::iter::zip (lhs, rhs)
+				{
+					let output_i = self . a . clone () . $method (lhs_i, rhs_i);
+
+					unsafe { output . push_unchecked (output_i); }
+				}
+
+				unsafe { output . into_init_array () }
+			}
+		}
+
+		impl <'a, A, T, const N: usize> $Trait <[T; N], &'a [T; N]>
+		for ElementwiseAlgebra <A, T>
+		where A: Clone + $Trait <T, &'a T, Output = T>
+		{
+			type Output = [T; N];
+
+			fn $method (self, lhs: [T; N], rhs: &'a [T; N]) -> Self::Output
+			{
+				let mut output = PartialInitArray::new ();
+
+				for (lhs_i, rhs_i) in std::iter::zip (lhs, rhs)
+				{
+					let output_i = self . a . clone () . $method (lhs_i, rhs_i);
+
+					unsafe { output . push_unchecked (output_i); }
+				}
+
+				unsafe { output . into_init_array () }
+			}
+		}
+
+		impl <'a, A, T, const N: usize> $Trait <&'a [T; N], [T; N]>
+		for ElementwiseAlgebra <A, T>
+		where A: Clone + $Trait <&'a T, T, Output = T>
+		{
+			type Output = [T; N];
+
+			fn $method (self, lhs: &'a [T; N], rhs: [T; N]) -> Self::Output
+			{
+				let mut output = PartialInitArray::new ();
+
+				for (lhs_i, rhs_i) in std::iter::zip (lhs, rhs)
+				{
+					let output_i = self . a . clone () . $method (lhs_i, rhs_i);
+
+					unsafe { output . push_unchecked (output_i); }
+				}
+
+				unsafe { output . into_init_array () }
+			}
+		}
+
+		impl <'a, 'b, A, T, const N: usize> $Trait <&'a [T; N], &'b [T; N]>
+		for ElementwiseAlgebra <A, T>
+		where A: Clone + $Trait <&'a T, &'b T, Output = T>
+		{
+			type Output = [T; N];
+
+			fn $method (self, lhs: &'a [T; N], rhs: &'b [T; N]) -> Self::Output
+			{
+				let mut output = PartialInitArray::new ();
+
+				for (lhs_i, rhs_i) in std::iter::zip (lhs, rhs)
+				{
+					let output_i = self . a . clone () . $method (lhs_i, rhs_i);
+
+					unsafe { output . push_unchecked (output_i); }
+				}
+
+				unsafe { output . into_init_array () }
+			}
+		}
+	}
+}
+
+impl_bin! (Add, add);
+impl_bin! (Sub, sub);
+impl_bin! (Mul, mul);
+impl_bin! (Div, div);
+
+impl_bin! (Log, log);
+impl_bin! (Pow, pow);
+
+macro_rules! impl_bin_assign
+{
+	($TraitAssign: ident, $method_assign: ident) =>
+	{
+		impl <A, T, const N: usize> $TraitAssign <[T; N], [T; N]>
+		for ElementwiseAlgebra <A, T>
+		where A: Clone + $TraitAssign <T, T>
+		{
+			fn $method_assign (self, lhs: &mut [T; N], rhs: [T; N])
+			{
+				for (lhs_i, rhs_i) in std::iter::zip (lhs, rhs)
+				{
+					self . a . clone () . $method_assign (lhs_i, rhs_i);
+				}
+			}
+		}
+
+		impl <'a, A, T, const N: usize> $TraitAssign <[T; N], &'a [T; N]>
+		for ElementwiseAlgebra <A, T>
+		where A: Clone + $TraitAssign <T, &'a T>
+		{
+			fn $method_assign (self, lhs: &mut [T; N], rhs: &'a [T; N])
+			{
+				for (lhs_i, rhs_i) in std::iter::zip (lhs, rhs)
+				{
+					self . a . clone () . $method_assign (lhs_i, rhs_i);
+				}
+			}
+		}
+	}
+}
+
+impl_bin_assign! (AddAssign, add_assign);
+impl_bin_assign! (SubAssign, sub_assign);
+impl_bin_assign! (MulAssign, mul_assign);
+impl_bin_assign! (DivAssign, div_assign);
+
+impl_bin_assign! (PowAssign, pow_assign);
+impl_bin_assign! (LogAssign, log_assign);
+
+impl <A, T, const N: usize> AdditionIsCommutative <[T; N], [T; N]>
+for ElementwiseAlgebra <A, T>
+where A: AdditionIsCommutative <T, T>
+{
+}
+
+impl <A, T, const N: usize> MultiplicationIsCommutative <[T; N], [T; N]>
+for ElementwiseAlgebra <A, T>
+where A: MultiplicationIsCommutative <T, T>
+{
+}
+
+macro_rules! impl_value
+{
+	($Value: ident, $value: ident, $is_value: ident) =>
+	{
+		impl <A, T, const N: usize> $Value <[T; N]>
+		for ElementwiseAlgebra <A, T>
+		where A: Clone + $Value <T>
+		{
+			fn $value (self) -> [T; N]
+			{
+				std::array::from_fn (|_| self . a . clone () . $value ())
+			}
+
+			fn $is_value (self, x: &[T; N]) -> bool
+			{
+				for x_i in x
+				{
+					if ! self . a . clone () . $is_value (x_i) { return false; }
+				}
+
+				true
+			}
+		}
+	}
+}
+
+impl_value! (Zero, zero, is_zero);
+impl_value! (One, one, is_one);
+impl_value! (E, e, is_e);
+impl_value! (Pi, pi, is_pi);
+impl_value! (Inf, inf, is_inf);
+impl_value! (NaN, nan, is_nan);
+
+pub type ElementwiseAccumulator <A, T, const N: usize> =
+	[<A as Accumulatable <T>>::Accumulator; N];
+
+pub struct ElementwiseAccumulatorAlgebra <A, T>
+{
+	a: A,
+	_t: PhantomData <T>
+}
+
+impl <A, T> Copy for ElementwiseAccumulatorAlgebra <A, T>
+where A: Copy
+{
+}
+
+impl <A, T> Clone for ElementwiseAccumulatorAlgebra <A, T>
+where A: Clone
+{
+	fn clone (&self) -> Self
+	{
+		Self::new (self . a . clone ())
+	}
+}
+
+impl <A, T> ElementwiseAccumulatorAlgebra <A, T>
+{
+	fn new (a: A) -> Self
+	{
+		Self {a, _t: PhantomData::default ()}
+	}
+}
+
+impl <A, T, const N: usize> Accumulatable <[T; N]>
+for ElementwiseAlgebra <A, T>
+where
+	A: Clone + Accumulatable <T>,
+	A::AccumulatorAlgebra: Clone
+{
+	type AccumulatorAlgebra = ElementwiseAccumulatorAlgebra <A, T>;
+	type Accumulator = ElementwiseAccumulator <A, T, N>;
+
+	fn accumulator (self) -> Self::AccumulatorAlgebra
+	{
+		Self::AccumulatorAlgebra::new (self . a)
+	}
+}
+
+impl <A, T, const N: usize> Zero <ElementwiseAccumulator <A, T, N>>
+for ElementwiseAccumulatorAlgebra <A, T>
+where
+	A: Accumulatable <T>,
+	A::AccumulatorAlgebra: Clone + Zero <A::Accumulator>
+{
+	fn zero (self) -> ElementwiseAccumulator <A, T, N>
+	{
+		let accumulator_a = self . a . accumulator ();
+
+		std::array::from_fn (|_| accumulator_a . clone () . zero ())
+	}
+
+	fn is_zero (self, x: &ElementwiseAccumulator <A, T, N>) -> bool
+	{
+		let accumulator_a = self . a . accumulator ();
+
+		for x_i in x
+		{
+			if ! accumulator_a . clone () . is_zero (x_i) { return false; }
+		}
+
+		true
+	}
+}
+
+impl <A, T, const N: usize>
+AddAssign <ElementwiseAccumulator <A, T, N>, [T; N]>
+for ElementwiseAccumulatorAlgebra <A, T>
+where
+	A: Accumulatable <T>,
+	A::AccumulatorAlgebra: Clone + AddAssign <A::Accumulator, T>
+{
+	fn add_assign
+	(
+		self,
+		lhs: &mut ElementwiseAccumulator <A, T, N>,
+		rhs: [T; N]
+	)
+	{
+		let accumulator_a = self . a . accumulator ();
+
+		for (lhs_i, rhs_i) in std::iter::zip (lhs, rhs)
+		{
+			accumulator_a . clone () . add_assign (lhs_i, rhs_i);
+		}
+	}
+}
+
+impl <'a, A, T, const N: usize>
+AddAssign <ElementwiseAccumulator <A, T, N>, &'a [T; N]>
+for ElementwiseAccumulatorAlgebra <A, T>
+where
+	A: Accumulatable <T>,
+	A::AccumulatorAlgebra: Clone + AddAssign <A::Accumulator, &'a T>
+{
+	fn add_assign
+	(
+		self,
+		lhs: &mut ElementwiseAccumulator <A, T, N>,
+		rhs: &'a [T; N]
+	)
+	{
+		let accumulator_a = self . a . accumulator ();
+
+		for (lhs_i, rhs_i) in std::iter::zip (lhs, rhs)
+		{
+			accumulator_a . clone () . add_assign (lhs_i, rhs_i);
+		}
+	}
+}
+
+impl <A, X, T, const N: usize> Convert <[X; N], [T; N]>
+for ElementwiseAlgebra <A, T>
+where A: Clone + Convert <X, T>
+{
+	fn convert (self, x: [X; N]) -> [T; N]
+	{
+		x . map (|x_i| self . a . clone () . convert (x_i))
+	}
+}
+
+impl <A, X, T, const N: usize> ApproxConvert <[X; N], [T; N]>
+for ElementwiseAlgebra <A, T>
+where A: Clone + ApproxConvert <X, T>
+{
+	fn approx_convert (self, x: [X; N]) -> [T; N]
+	{
+		x . map (|x_i| self . a . clone () . approx_convert (x_i))
+	}
+}
+
+macro_rules! impl_scalar_bin
+{
+	($Trait: ident, $method: ident) =>
+	{
+		impl <A, T, const N: usize> $Trait <[T; N], T>
+		for ElementwiseAlgebra <A, T>
+		where A: Clone + for <'a> $Trait <T, &'a T, Output = T>
+		{
+			type Output = [T; N];
+
+			fn $method (self, lhs: [T; N], rhs: T) -> Self::Output
+			{
+				lhs . map (|lhs_i| self . a . clone () . $method (lhs_i, &rhs))
+			}
+		}
+
+		impl <'a, A, T, const N: usize> $Trait <[T; N], &'a T>
+		for ElementwiseAlgebra <A, T>
+		where A: Clone + $Trait <T, &'a T, Output = T>
+		{
+			type Output = [T; N];
+
+			fn $method (self, lhs: [T; N], rhs: &'a T) -> Self::Output
+			{
+				lhs . map (|lhs_i| self . a . clone () . $method (lhs_i, rhs))
+			}
+		}
+
+		impl <'a, A, T, const N: usize> $Trait <&'a [T; N], T>
+		for ElementwiseAlgebra <A, T>
+		where A: Clone + for <'b> $Trait <&'a T, &'b T, Output = T>
+		{
+			type Output = [T; N];
+
+			fn $method (self, lhs: &'a [T; N], rhs: T) -> Self::Output
+			{
+				lhs
+					. each_ref ()
+					. map (|lhs_i| self . a . clone () . $method (lhs_i, &rhs))
+			}
+		}
+
+		impl <'a, 'b, A, T, const N: usize> $Trait <&'a [T; N], &'b T>
+		for ElementwiseAlgebra <A, T>
+		where A: Clone + $Trait <&'a T, &'b T, Output = T>
+		{
+			type Output = [T; N];
+
+			fn $method (self, lhs: &'a [T; N], rhs: &'b T) -> Self::Output
+			{
+				lhs
+					. each_ref ()
+					. map (|lhs_i| self . a . clone () . $method (lhs_i, rhs))
+			}
+		}
+
+		impl <A, T, const N: usize> $Trait <T, [T; N]>
+		for ElementwiseAlgebra <A, T>
+		where A: Clone + for <'a> $Trait <&'a T, T, Output = T>
+		{
+			type Output = [T; N];
+
+			fn $method (self, lhs: T, rhs: [T; N]) -> Self::Output
+			{
+				rhs . map (|rhs_i| self . a . clone () . $method (&lhs, rhs_i))
+			}
+		}
+
+		impl <'a, A, T, const N: usize> $Trait <T, &'a [T; N]>
+		for ElementwiseAlgebra <A, T>
+		where A: Clone + for <'b> $Trait <&'b T, &'a T, Output = T>
+		{
+			type Output = [T; N];
+
+			fn $method (self, lhs: T, rhs: &'a [T; N]) -> Self::Output
+			{
+				rhs
+					. each_ref ()
+					. map (|rhs_i| self . a . clone () . $method (&lhs, rhs_i))
+			}
+		}
+
+		impl <'a, A, T, const N: usize> $Trait <&'a T, [T; N]>
+		for ElementwiseAlgebra <A, T>
+		where A: Clone + $Trait <&'a T, T, Output = T>
+		{
+			type Output = [T; N];
+
+			fn $method (self, lhs: &'a T, rhs: [T; N]) -> Self::Output
+			{
+				rhs . map (|rhs_i| self . a . clone () . $method (lhs, rhs_i))
+			}
+		}
+
+		impl <'a, 'b, A, T, const N: usize> $Trait <&'a T, &'b [T; N]>
+		for ElementwiseAlgebra <A, T>
+		where A: Clone + $Trait <&'a T, &'b T, Output = T>
+		{
+			type Output = [T; N];
+
+			fn $method (self, lhs: &'a T, rhs: &'b [T; N]) -> Self::Output
+			{
+				rhs
+					. each_ref ()
+					. map (|rhs_i| self . a . clone () . $method (lhs, rhs_i))
+			}
+		}
+	}
+}
+
+impl_scalar_bin! (Mul, mul);
+impl_scalar_bin! (Div, div);
+
+impl_scalar_bin! (Log, log);
+impl_scalar_bin! (Pow, pow);
+
+macro_rules! impl_scalar_assign
+{
+	($TraitAssign: ident, $method_assign: ident) =>
+	{
+		impl <A, T, const N: usize> $TraitAssign <[T; N], T>
+		for ElementwiseAlgebra <A, T>
+		where A: Clone + for <'a> $TraitAssign <T, &'a T>
+		{
+			fn $method_assign (self, lhs: &mut [T; N], rhs: T)
+			{
+				for lhs_i in lhs
+				{
+					self . a . clone () . $method_assign (lhs_i, &rhs);
+				}
+			}
+		}
+
+		impl <'a, A, T, const N: usize> $TraitAssign <[T; N], &'a T>
+		for ElementwiseAlgebra <A, T>
+		where A: Clone + $TraitAssign <T, &'a T>
+		{
+			fn $method_assign (self, lhs: &mut [T; N], rhs: &'a T)
+			{
+				for lhs_i in lhs
+				{
+					self . a . clone () . $method_assign (lhs_i, rhs);
+				}
+			}
+		}
+	}
+}
+
+impl_scalar_assign! (MulAssign, mul_assign);
+impl_scalar_assign! (DivAssign, div_assign);
+
+impl_scalar_assign! (LogAssign, log_assign);
+impl_scalar_assign! (PowAssign, pow_assign);

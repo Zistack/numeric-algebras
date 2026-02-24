@@ -2,6 +2,8 @@
 
 mod macros;
 
+pub mod partial_init_array;
+
 pub mod traits;
 pub mod algebras;
 pub mod derive;

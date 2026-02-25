@@ -267,7 +267,7 @@ where A: MultiplicationIsCommutative <T, T>
 {
 }
 
-macro_rules! impl_value
+macro_rules! impl_value_conjunction
 {
 	($Value: ident, $value: ident, $is_value: ident) =>
 	{
@@ -293,12 +293,39 @@ macro_rules! impl_value
 	}
 }
 
-impl_value! (Zero, zero, is_zero);
-impl_value! (One, one, is_one);
-impl_value! (E, e, is_e);
-impl_value! (Pi, pi, is_pi);
-impl_value! (Inf, inf, is_inf);
-impl_value! (NaN, nan, is_nan);
+impl_value_conjunction! (Zero, zero, is_zero);
+impl_value_conjunction! (One, one, is_one);
+impl_value_conjunction! (E, e, is_e);
+impl_value_conjunction! (Pi, pi, is_pi);
+
+macro_rules! impl_value_disjunction
+{
+	($Value: ident, $value: ident, $is_value: ident) =>
+	{
+		impl <A, T, const N: usize> $Value <[T; N]>
+		for ElementwiseAlgebra <A, T>
+		where A: Clone + $Value <T>
+		{
+			fn $value (self) -> [T; N]
+			{
+				std::array::from_fn (|_| self . a . clone () . $value ())
+			}
+
+			fn $is_value (self, x: &[T; N]) -> bool
+			{
+				for x_i in x
+				{
+					if self . a . clone () . $is_value (x_i) { return true; }
+				}
+
+				false
+			}
+		}
+	}
+}
+
+impl_value_disjunction! (Inf, inf, is_inf);
+impl_value_disjunction! (NaN, nan, is_nan);
 
 pub type ElementwiseAccumulator <A, T, const N: usize> =
 	[<A as Accumulatable <T>>::Accumulator; N];
@@ -331,7 +358,7 @@ where
 impl <A, T> ElementwiseAccumulatorAlgebra <A, T>
 where A: Accumulatable <T>
 {
-	fn new (a: A::AccumulatorAlgebra) -> Self
+	pub fn new (a: A::AccumulatorAlgebra) -> Self
 	{
 		Self {a, _t: PhantomData::default ()}
 	}

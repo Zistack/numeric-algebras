@@ -13,6 +13,9 @@ pub use sum::*;
 mod values;
 pub use values::*;
 
+mod vector;
+pub use vector::*;
+
 #[cfg (any (test, feature = "proptest"))]
 mod unit_range;
 #[cfg (any (test, feature = "proptest"))]

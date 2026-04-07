@@ -1,3 +1,4 @@
+use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
 
 use crate::partial_init_array::*;
@@ -14,6 +15,32 @@ impl <A, T> ElementwiseAlgebra <A, T>
 	pub fn new (a: A) -> Self
 	{
 		Self {a,  _t: PhantomData::default ()}
+	}
+}
+
+impl <A, T> Copy for ElementwiseAlgebra <A, T>
+where A: Copy
+{
+}
+
+impl <A, T> Clone for ElementwiseAlgebra <A, T>
+where A: Clone
+{
+	fn clone (&self) -> Self
+	{
+		Self::new (self . a . clone ())
+	}
+}
+
+impl <A, T> Debug for ElementwiseAlgebra <A, T>
+where A: Debug
+{
+	fn fmt (&self, f: &mut Formatter <'_>) -> Result <(), std::fmt::Error>
+	{
+		f . debug_struct ("ElementwiseAlgebra")
+			. field ("a", &self . a)
+			. field ("_t", &self . _t)
+			. finish ()
 	}
 }
 
@@ -352,6 +379,20 @@ where
 	fn clone (&self) -> Self
 	{
 		Self::new (self . a . clone ())
+	}
+}
+
+impl <A, T> Debug for ElementwiseAccumulatorAlgebra <A, T>
+where
+	A: Accumulatable <T>,
+	A::AccumulatorAlgebra: Debug
+{
+	fn fmt (&self, f: &mut Formatter <'_>) -> Result <(), std::fmt::Error>
+	{
+		f . debug_struct ("ElementwiseAccumulatorAlgebra")
+			. field ("a", &self . a)
+			. field ("_t", &self . _t)
+			. finish ()
 	}
 }
 

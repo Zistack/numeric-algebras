@@ -22,9 +22,9 @@ macro_rules! a
 			(+, -, *, /, +=, -=, *=, /=)
 			(abs, recip, sqrt, pow, log, exp, ln, sin, cos, tan, sin_cos,
 				log_assign, pow_assign, is_zero, is_one, is_e, is_pi, is_inf,
-				is_nan, sum, convert, try_convert, approx_convert)
-			(zero, one, e, pi, inf, nan, zero_accumulator, convert,
-				approx_convert)
+				is_nan, sum, convert, try_convert, approx_convert, elements_sum,
+				elements_product, p_norm, p_sum, euclidean_norm, sum_of_squares)
+			(zero, one, e, pi, inf, nan, convert, approx_convert)
 		)
 	}
 }

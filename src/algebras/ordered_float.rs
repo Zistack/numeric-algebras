@@ -293,6 +293,50 @@ macro_rules! def_ordered_float_algebra
 					trait Inf <OrderedFloat <$f>>;
 
 					trait NaN <OrderedFloat <$f>>;
+
+					trait ElementsSum <OrderedFloat <$f>>
+					{
+						type Output = OrderedFloat <$f>;
+					}
+					trait <'a> ElementsSum <&'a OrderedFloat <$f>>
+					{
+						type Output = OrderedFloat <$f>;
+					}
+
+					trait ElementsProduct <OrderedFloat <$f>>
+					{
+						type Output = OrderedFloat <$f>;
+					}
+					trait <'a> ElementsProduct <&'a OrderedFloat <$f>>
+					{
+						type Output = OrderedFloat <$f>;
+					}
+
+					trait PNorm <OrderedFloat <$f>, OrderedFloat <$f>>
+					{
+						type Output = OrderedFloat <$f>;
+					}
+					trait <'a> PNorm <OrderedFloat <$f>, &'a OrderedFloat <$f>>
+					{
+						type Output = OrderedFloat <$f>;
+					}
+					trait <'a> PNorm <&'a OrderedFloat <$f>, OrderedFloat <$f>>
+					{
+						type Output = OrderedFloat <$f>;
+					}
+					trait <'a, 'b> PNorm <&'a OrderedFloat <$f>, &'b OrderedFloat <$f>>
+					{
+						type Output = OrderedFloat <$f>;
+					}
+
+					trait EuclideanNorm <OrderedFloat <$f>>
+					{
+						type Output = OrderedFloat <$f>;
+					}
+					trait <'a> EuclideanNorm <&'a OrderedFloat <$f>>
+					{
+						type Output = OrderedFloat <$f>;
+					}
 				}
 			}
 

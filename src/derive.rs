@@ -97,5 +97,14 @@ pub use numeric_algebras_macros::{
 	__def_scalar_multiplication_is_commutative_trait_inner,
 
 	def_arithmetic,
-	def_scalar_arithmetic
+	def_scalar_arithmetic,
+
+	def_elements_sum_traits,
+	__def_elements_sum_traits_inner,
+	def_elements_product_traits,
+	__def_elements_product_traits_inner,
+	def_p_norm_traits,
+	__def_p_norm_traits_inner,
+	def_euclidean_norm_traits,
+	__def_euclidean_norm_traits_inner
 };

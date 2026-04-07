@@ -110,3 +110,11 @@ pub fn def_scalar_arithmetic (input: TokenStream) -> TokenStream
 {
 	scalar_arithmetic::def_scalar_arithmetic_impl (input)
 }
+
+mod vector;
+use vector::*;
+
+def_elements_sum_traits_macro! ();
+def_elements_product_traits_macro! ();
+def_p_norm_traits_macro! ();
+def_euclidean_norm_traits_macro! ();

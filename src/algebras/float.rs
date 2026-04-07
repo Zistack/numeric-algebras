@@ -66,6 +66,88 @@ macro_rules! impl_traits_for_ty
 			}
 		}
 
+		impl ElementsSum <$T> for $Algebra
+		{
+			type Output = $T;
+
+			fn elements_sum (self, x: $T) -> Self::Output { x }
+		}
+
+		impl <'a> ElementsSum <&'a $T> for $Algebra
+		{
+			type Output = $T;
+
+			fn elements_sum (self, x: &'a $T) -> Self::Output { *x }
+		}
+
+		impl ElementsProduct <$T> for $Algebra
+		{
+			type Output = $T;
+
+			fn elements_product (self, x: $T) -> Self::Output { x }
+		}
+
+		impl <'a> ElementsProduct <&'a $T> for $Algebra
+		{
+			type Output = $T;
+
+			fn elements_product (self, x: &'a $T) -> Self::Output { *x }
+		}
+
+		impl PNorm <$T, $T> for $Algebra
+		{
+			type Output = $T;
+
+			fn p_norm (self, x: $T, _p: $T) -> Self::Output { x }
+
+			fn p_sum (self, x: $T, p: $T) -> Self::Output { x . powf (p) }
+		}
+
+		impl <'a> PNorm <$T, &'a $T> for $Algebra
+		{
+			type Output = $T;
+
+			fn p_norm (self, x: $T, _p: &'a $T) -> Self::Output { x }
+
+			fn p_sum (self, x: $T, p: &'a $T) -> Self::Output { x . powf (*p) }
+		}
+
+		impl <'a> PNorm <&'a $T, $T> for $Algebra
+		{
+			type Output = $T;
+
+			fn p_norm (self, x: &'a $T, _p: $T) -> Self::Output { *x }
+
+			fn p_sum (self, x: &'a $T, p: $T) -> Self::Output { x . powf (p) }
+		}
+
+		impl <'a, 'b> PNorm <&'a $T, &'b $T> for $Algebra
+		{
+			type Output = $T;
+
+			fn p_norm (self, x: &'a $T, _p: &'b $T) -> Self::Output { *x }
+
+			fn p_sum (self, x: &'a $T, p: &'b $T) -> Self::Output { x . powf (*p) }
+		}
+
+		impl EuclideanNorm <$T> for $Algebra
+		{
+			type Output = $T;
+
+			fn euclidean_norm (self, x: $T) -> Self::Output { x }
+
+			fn sum_of_squares (self, x: $T) -> Self::Output { x * x }
+		}
+
+		impl <'a> EuclideanNorm <&'a $T> for $Algebra
+		{
+			type Output = $T;
+
+			fn euclidean_norm (self, x: &'a $T) -> Self::Output { *x }
+
+			fn sum_of_squares (self, x: &'a $T) -> Self::Output { x * x }
+		}
+
 		#[cfg (any (test, feature = "proptest"))]
 		impl UnitRange <$T> for $Algebra
 		{

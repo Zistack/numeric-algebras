@@ -17,15 +17,26 @@ impl <T, const N: usize> PartialInitArray <T, N>
 		}
 	}
 
+	// Safety: 0 <= self . num_init < N
 	pub unsafe fn push_unchecked (&mut self, e: T)
 	{
 		self . array . get_unchecked_mut (self . num_init) . write (e);
 		self . num_init = self . num_init . unchecked_add (1);
 	}
 
+	// Safety: self . num_init == N.
 	pub unsafe fn into_init_array (mut self) -> [T; N]
 	{
-		MaybeUninit::array_assume_init (ManuallyDrop::take (&mut self . array))
+		let array = MaybeUninit::array_assume_init (ManuallyDrop::take (&mut self . array));
+
+		// Because rust will call 'drop' on self at the end of this method, I
+		// have to make sure that we don't try to drop the members of the array
+		// that we just moved out of the array.  To that end, I am setting the
+		// number of initialized entries to 0, which should prevent that
+		// particular issue.
+		self . num_init = 0;
+
+		array
 	}
 }
 
